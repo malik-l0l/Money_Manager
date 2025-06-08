@@ -7,6 +7,7 @@ class AppConstants {
   static const String transactionsBox = 'transactions';
   static const String userSettingsBox = 'userSettings';
   static const String balanceBox = 'balance';
+  static const String peopleTransactionsBox = 'peopleTransactions';
   
   // Settings Keys
   static const String userSettingsKey = 'settings';
