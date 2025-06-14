@@ -10,20 +10,55 @@ class PeopleManagerScreen extends StatefulWidget {
   _PeopleManagerScreenState createState() => _PeopleManagerScreenState();
 }
 
-class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
+class _PeopleManagerScreenState extends State<PeopleManagerScreen> with WidgetsBindingObserver {
   List<PersonSummary> _peopleSummaries = [];
-  double _netBalance = 0.0;
+  double _youOwe = 0.0;
+  double _owesYou = 0.0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Refresh data when app resumes to prevent UI crashes
+    if (state == AppLifecycleState.resumed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadData();
+        }
+      });
+    }
+  }
+
   void _loadData() {
+    if (!mounted) return;
+    
     setState(() {
       _peopleSummaries = PeopleHiveService.getAllPeopleSummaries();
-      _netBalance = PeopleHiveService.getNetBalance();
+      
+      // Calculate amounts you owe and amounts owed to you
+      _youOwe = 0.0;
+      _owesYou = 0.0;
+      
+      for (final person in _peopleSummaries) {
+        if (person.totalBalance > 0) {
+          _owesYou += person.totalBalance; // People owe you
+        } else if (person.totalBalance < 0) {
+          _youOwe += person.totalBalance.abs(); // You owe people
+        }
+      }
     });
   }
 
@@ -49,8 +84,6 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildNetBalanceCard(),
-              SizedBox(height: 24),
               _buildQuickStats(),
               SizedBox(height: 32),
               _buildPeopleList(),
@@ -67,96 +100,13 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
     );
   }
 
-  Widget _buildNetBalanceCard() {
-    final isPositive = _netBalance >= 0;
-    final color = isPositive ? Colors.green : Colors.red;
-    
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color,
-            color.withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.3),
-            blurRadius: 20,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Net Balance',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 16),
-          Text(
-            '₹${_netBalance.abs().toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            isPositive 
-                ? 'People owe you money' 
-                : _netBalance == 0 
-                    ? 'All settled up!' 
-                    : 'You owe people money',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white.withOpacity(0.9),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuickStats() {
-    final totalGiven = PeopleHiveService.getTotalGiven();
-    final totalTaken = PeopleHiveService.getTotalTaken();
-    
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
-            'Total Given',
-            totalGiven,
+            'You Owe',
+            _youOwe,
             Colors.red,
             Icons.arrow_upward,
           ),
@@ -164,8 +114,8 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
         SizedBox(width: 16),
         Expanded(
           child: _buildStatCard(
-            'Total Taken',
-            totalTaken,
+            'Owes You',
+            _owesYou,
             Colors.green,
             Icons.arrow_downward,
           ),

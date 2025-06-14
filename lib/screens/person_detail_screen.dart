@@ -14,17 +14,40 @@ class PersonDetailScreen extends StatefulWidget {
   _PersonDetailScreenState createState() => _PersonDetailScreenState();
 }
 
-class _PersonDetailScreenState extends State<PersonDetailScreen> {
+class _PersonDetailScreenState extends State<PersonDetailScreen> with WidgetsBindingObserver {
   List<PeopleTransaction> _transactions = [];
   double _balance = 0.0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Refresh data when app resumes to prevent UI crashes
+    if (state == AppLifecycleState.resumed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadData();
+        }
+      });
+    }
+  }
+
   void _loadData() {
+    if (!mounted) return;
+    
     setState(() {
       _transactions = PeopleHiveService.getTransactionsForPerson(widget.personName);
       _balance = PeopleHiveService.getBalanceForPerson(widget.personName);

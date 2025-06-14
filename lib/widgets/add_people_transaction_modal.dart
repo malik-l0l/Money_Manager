@@ -19,7 +19,7 @@ class AddPeopleTransactionModal extends StatefulWidget {
 }
 
 class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal> 
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   late TextEditingController _amountController;
   late TextEditingController _reasonController;
   late TextEditingController _personNameController;
@@ -36,6 +36,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     
     _animationController = AnimationController(
       duration: Duration(milliseconds: 300),
@@ -75,6 +76,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     _amountController.dispose();
     _reasonController.dispose();
@@ -83,6 +85,19 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     _amountFocus.dispose();
     _reasonFocus.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    // Handle app lifecycle changes to prevent crashes
+    if (state == AppLifecycleState.paused) {
+      // Unfocus all text fields when app goes to background
+      _personNameFocus.unfocus();
+      _amountFocus.unfocus();
+      _reasonFocus.unfocus();
+    }
   }
   
   @override
