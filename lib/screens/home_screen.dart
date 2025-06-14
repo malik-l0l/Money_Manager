@@ -43,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
             CustomAppBar(
               onSettingsPressed: () => _navigateToSettings(),
               onSummaryPressed: () => _navigateToSummary(),
+              onPeoplePressed: () => _navigateToPeopleManager(),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -57,10 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       currency: settings.currency,
                     ),
                     SizedBox(height: 32),
-                    _buildQuickActions(),
-                    SizedBox(height: 32),
-                    _buildRecentTransactions(
-                        recentTransactions, settings.currency),
+                    _buildRecentTransactions(recentTransactions, settings.currency),
                   ],
                 ),
               ),
@@ -80,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildGreeting(String name) {
     final hour = DateTime.now().hour;
     String greeting;
-
+    
     if (hour < 12) {
       greeting = 'Good Morning';
     } else if (hour < 17) {
@@ -111,100 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: _buildActionCard(
-                'People Manager',
-                'Track money with friends',
-                Icons.people,
-                Colors.purple,
-                () => _navigateToPeopleManager(),
-              ),
-            ),
-            SizedBox(width: 16),
-            Expanded(
-              child: _buildActionCard(
-                'Monthly Report',
-                'View detailed summary',
-                Icons.bar_chart,
-                Colors.blue,
-                () => _navigateToSummary(),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionCard(String title, String subtitle, IconData icon,
-      Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 24,
-              ),
-            ),
-            SizedBox(height: 16),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: color.withOpacity(0.8),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecentTransactions(
-      List<Transaction> transactions, String currency) {
+  Widget _buildRecentTransactions(List<Transaction> transactions, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -348,6 +253,6 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => PeopleManagerScreen()),
-    );
+    ).then((_) => _loadData()); // Reload data when returning from people manager
   }
 }

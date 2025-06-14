@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class CustomAppBar extends StatelessWidget {
   final VoidCallback? onSettingsPressed;
   final VoidCallback? onSummaryPressed;
+  final VoidCallback? onPeoplePressed;
 
   const CustomAppBar({
     Key? key,
     this.onSettingsPressed,
     this.onSummaryPressed,
+    this.onPeoplePressed,
   }) : super(key: key);
 
   @override
@@ -42,6 +44,31 @@ class CustomAppBar extends StatelessWidget {
           ),
           Row(
             children: [
+              if (onPeoplePressed != null)
+                IconButton(
+                  onPressed: onPeoplePressed,
+                  icon: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.people_outline,
+                      color: Colors.purple,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              SizedBox(width: 8),
               if (onSummaryPressed != null)
                 IconButton(
                   onPressed: onSummaryPressed,
@@ -61,7 +88,7 @@ class CustomAppBar extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.bar_chart_rounded,
-                      color: Theme.of(context).primaryColor,
+                      color: Colors.blue,
                       size: 20,
                     ),
                   ),

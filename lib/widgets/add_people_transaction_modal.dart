@@ -28,6 +28,11 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   
+  // Focus nodes for better UX
+  late FocusNode _personNameFocus;
+  late FocusNode _amountFocus;
+  late FocusNode _reasonFocus;
+  
   @override
   void initState() {
     super.initState();
@@ -46,6 +51,11 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     ));
     
     _animationController.forward();
+    
+    // Initialize focus nodes
+    _personNameFocus = FocusNode();
+    _amountFocus = FocusNode();
+    _reasonFocus = FocusNode();
     
     if (widget.transaction != null) {
       _amountController = TextEditingController(
@@ -69,6 +79,9 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     _amountController.dispose();
     _reasonController.dispose();
     _personNameController.dispose();
+    _personNameFocus.dispose();
+    _amountFocus.dispose();
+    _reasonFocus.dispose();
     super.dispose();
   }
   
@@ -212,11 +225,16 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                     SizedBox(height: 8),
                     TextField(
                       controller: _personNameController,
+                      focusNode: _personNameFocus,
                       decoration: InputDecoration(
                         hintText: 'Enter person name',
                         prefixIcon: Icon(Icons.person_outline),
                       ),
                       textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      onSubmitted: (_) {
+                        FocusScope.of(context).requestFocus(_amountFocus);
+                      },
                     ),
                     
                     SizedBox(height: 24),
@@ -232,6 +250,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                     SizedBox(height: 8),
                     TextField(
                       controller: _amountController,
+                      focusNode: _amountFocus,
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         hintText: '0.00',
@@ -247,9 +266,13 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                         fontWeight: FontWeight.bold,
                         color: _isGiven ? Colors.red : Colors.green,
                       ),
+                      textInputAction: TextInputAction.next,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
                       ],
+                      onSubmitted: (_) {
+                        FocusScope.of(context).requestFocus(_reasonFocus);
+                      },
                     ),
                     
                     SizedBox(height: 24),
@@ -265,12 +288,17 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                     SizedBox(height: 8),
                     TextField(
                       controller: _reasonController,
+                      focusNode: _reasonFocus,
                       decoration: InputDecoration(
                         hintText: 'What was this for?',
                         prefixIcon: Icon(Icons.description_outlined),
                       ),
                       textCapitalization: TextCapitalization.sentences,
+                      textInputAction: TextInputAction.done,
                       maxLength: 100,
+                      onSubmitted: (_) {
+                        _saveTransaction();
+                      },
                     ),
                     
                     SizedBox(height: 16),
@@ -325,20 +353,34 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                           color: (_isGiven ? Colors.red : Colors.green).withOpacity(0.3),
                         ),
                       ),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: _isGiven ? Colors.red : Colors.green,
-                          ),
-                          SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _getPreviewText(),
-                              style: TextStyle(
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
                                 color: _isGiven ? Colors.red : Colors.green,
-                                fontWeight: FontWeight.w500,
                               ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _getPreviewText(),
+                                  style: TextStyle(
+                                    color: _isGiven ? Colors.red : Colors.green,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            _getMainBalanceImpact(),
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
                             ),
                           ),
                         ],
@@ -386,6 +428,18 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       return 'You will see: "Take ₹$amount from $person"';
     } else {
       return 'You will see: "Give ₹$amount back to $person"';
+    }
+  }
+
+  String _getMainBalanceImpact() {
+    final amount = _amountController.text.isNotEmpty ? _amountController.text : '0';
+    final person = _personNameController.text.isNotEmpty ? _personNameController.text : 'Person';
+    final reason = _reasonController.text.isNotEmpty ? _reasonController.text : 'reason';
+    
+    if (_isGiven) {
+      return 'Main balance: -₹$amount | History: "Give money to "$person" for "$reason""';
+    } else {
+      return 'Main balance: +₹$amount | History: "Take money from "$person" for "$reason""';
     }
   }
   

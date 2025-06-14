@@ -1,18 +1,89 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/people_transaction.dart';
 import '../models/person_summary.dart';
+import '../models/transaction.dart';
 import '../utils/constants.dart';
+import 'hive_service.dart';
 
 class PeopleHiveService {
   static late Box<PeopleTransaction> _peopleTransactionsBox;
 
   static Future<void> init() async {
-    _peopleTransactionsBox = await Hive.openBox<PeopleTransaction>(AppConstants.peopleTransactionsBox);
+    _peopleTransactionsBox = await Hive.openBox<PeopleTransaction>(
+        AppConstants.peopleTransactionsBox);
   }
 
-  // Add a new people transaction
-  static Future<void> addPeopleTransaction(PeopleTransaction transaction) async {
+  // Add a new people transaction and update main transaction history
+  static Future<void> addPeopleTransaction(
+      PeopleTransaction transaction) async {
     await _peopleTransactionsBox.put(transaction.id, transaction);
+
+    // Only add to main transaction history (balance will be updated automatically by the transaction)
+    await _updateMainTransactionHistory(transaction);
+  }
+
+  // Update a people transaction and adjust main transaction history
+  static Future<void> updatePeopleTransaction(
+      String id, PeopleTransaction newTransaction) async {
+    final oldTransaction = _peopleTransactionsBox.get(id);
+
+    if (oldTransaction != null) {
+      // Remove the old transaction's effect from main history
+      await _removeMainTransactionHistory(oldTransaction);
+    }
+
+    // Apply the new transaction
+    await _peopleTransactionsBox.put(id, newTransaction);
+    await _updateMainTransactionHistory(newTransaction);
+  }
+
+  // Delete a people transaction and adjust main transaction history
+  static Future<void> deletePeopleTransaction(String id) async {
+    final transaction = _peopleTransactionsBox.get(id);
+
+    if (transaction != null) {
+      // Remove the transaction's effect from main history
+      await _removeMainTransactionHistory(transaction);
+      await _peopleTransactionsBox.delete(id);
+    }
+  }
+
+  // Add entry to main transaction history (balance will be updated automatically)
+  static Future<void> _updateMainTransactionHistory(
+      PeopleTransaction peopleTransaction) async {
+    // Calculate the amount for main transaction (negative for giving, positive for taking)
+    final mainTransactionAmount = peopleTransaction.isGiven
+        ? -peopleTransaction.amount // Giving money reduces main balance
+        : peopleTransaction.amount; // Taking money increases main balance
+
+    // Create a main transaction entry
+    final mainTransaction = Transaction(
+      id: '${peopleTransaction.id}_main',
+      date: peopleTransaction.date,
+      amount: mainTransactionAmount,
+      reason: peopleTransaction.isGiven
+          ? 'Give money to "${peopleTransaction.personName}" for "${peopleTransaction.reason}"'
+          : 'Take money from "${peopleTransaction.personName}" for "${peopleTransaction.reason}"',
+      timestamp: peopleTransaction.timestamp,
+    );
+
+    // Add to main transaction history (this will automatically update the balance)
+    await HiveService.addTransaction(mainTransaction);
+  }
+
+  // Remove the corresponding main transaction from history
+  static Future<void> _removeMainTransactionHistory(
+      PeopleTransaction peopleTransaction) async {
+    // Find and remove the corresponding main transaction
+    final mainTransactionId = '${peopleTransaction.id}_main';
+    final allTransactions = HiveService.getAllTransactions();
+
+    for (int i = 0; i < allTransactions.length; i++) {
+      if (allTransactions[i].id == mainTransactionId) {
+        await HiveService.deleteTransaction(i);
+        break;
+      }
+    }
   }
 
   // Get all people transactions
@@ -24,7 +95,8 @@ class PeopleHiveService {
   // Get transactions for a specific person
   static List<PeopleTransaction> getTransactionsForPerson(String personName) {
     return _peopleTransactionsBox.values
-        .where((transaction) => transaction.personName.toLowerCase() == personName.toLowerCase())
+        .where((transaction) =>
+            transaction.personName.toLowerCase() == personName.toLowerCase())
         .toList()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   }
@@ -32,7 +104,7 @@ class PeopleHiveService {
   // Get all unique people with their summaries
   static List<PersonSummary> getAllPeopleSummaries() {
     final Map<String, List<PeopleTransaction>> peopleTransactions = {};
-    
+
     // Group transactions by person
     for (final transaction in _peopleTransactionsBox.values) {
       final name = transaction.personName.toLowerCase();
@@ -47,10 +119,10 @@ class PeopleHiveService {
     for (final entry in peopleTransactions.entries) {
       final transactions = entry.value;
       final totalBalance = transactions.fold<double>(
-        0.0, 
+        0.0,
         (sum, transaction) => sum + transaction.balanceImpact,
       );
-      
+
       final lastTransaction = transactions
           .reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
 
@@ -63,25 +135,16 @@ class PeopleHiveService {
     }
 
     // Sort by last transaction date (most recent first)
-    summaries.sort((a, b) => b.lastTransactionDate.compareTo(a.lastTransactionDate));
+    summaries
+        .sort((a, b) => b.lastTransactionDate.compareTo(a.lastTransactionDate));
     return summaries;
-  }
-
-  // Update a people transaction
-  static Future<void> updatePeopleTransaction(String id, PeopleTransaction transaction) async {
-    await _peopleTransactionsBox.put(id, transaction);
-  }
-
-  // Delete a people transaction
-  static Future<void> deletePeopleTransaction(String id) async {
-    await _peopleTransactionsBox.delete(id);
   }
 
   // Get balance for a specific person
   static double getBalanceForPerson(String personName) {
     final transactions = getTransactionsForPerson(personName);
     return transactions.fold<double>(
-      0.0, 
+      0.0,
       (sum, transaction) => sum + transaction.balanceImpact,
     );
   }
@@ -102,8 +165,8 @@ class PeopleHiveService {
 
   // Get net balance (positive means people owe you, negative means you owe people)
   static double getNetBalance() {
-    return _peopleTransactionsBox.values
-        .fold<double>(0.0, (sum, transaction) => sum + transaction.balanceImpact);
+    return _peopleTransactionsBox.values.fold<double>(
+        0.0, (sum, transaction) => sum + transaction.balanceImpact);
   }
 
   // Clear all people transactions (for testing/reset)
