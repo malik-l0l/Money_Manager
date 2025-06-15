@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/people_transaction.dart';
+import '../services/people_hive_service.dart';
 
 class AddPeopleTransactionModal extends StatefulWidget {
   final PeopleTransaction? transaction;
@@ -33,6 +34,11 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   late FocusNode _amountFocus;
   late FocusNode _reasonFocus;
   
+  // Autocomplete variables
+  List<String> _allPeopleNames = [];
+  List<String> _filteredNames = [];
+  bool _showSuggestions = false;
+  
   @override
   void initState() {
     super.initState();
@@ -58,6 +64,9 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     _amountFocus = FocusNode();
     _reasonFocus = FocusNode();
     
+    // Load existing people names for autocomplete
+    _loadPeopleNames();
+    
     if (widget.transaction != null) {
       _amountController = TextEditingController(
         text: widget.transaction!.amount.toStringAsFixed(2),
@@ -72,6 +81,9 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       _personNameController = TextEditingController(text: widget.prefilledPersonName ?? '');
       _selectedDate = DateTime.now();
     }
+    
+    // Add listener for autocomplete
+    _personNameController.addListener(_onPersonNameChanged);
   }
   
   @override
@@ -98,6 +110,38 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       _amountFocus.unfocus();
       _reasonFocus.unfocus();
     }
+  }
+  
+  void _loadPeopleNames() {
+    final summaries = PeopleHiveService.getAllPeopleSummaries();
+    _allPeopleNames = summaries.map((summary) => summary.name).toList();
+  }
+  
+  void _onPersonNameChanged() {
+    final query = _personNameController.text.toLowerCase();
+    if (query.isEmpty) {
+      setState(() {
+        _showSuggestions = false;
+        _filteredNames = [];
+      });
+      return;
+    }
+    
+    _filteredNames = _allPeopleNames
+        .where((name) => name.toLowerCase().contains(query))
+        .toList();
+    
+    setState(() {
+      _showSuggestions = _filteredNames.isNotEmpty;
+    });
+  }
+  
+  void _selectSuggestion(String name) {
+    _personNameController.text = name;
+    setState(() {
+      _showSuggestions = false;
+    });
+    FocusScope.of(context).requestFocus(_amountFocus);
   }
   
   @override
@@ -229,7 +273,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                     
                     SizedBox(height: 24),
                     
-                    // Person Name Field
+                    // Person Name Field with Autocomplete
                     Text(
                       'Person Name',
                       style: TextStyle(
@@ -238,18 +282,66 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                       ),
                     ),
                     SizedBox(height: 8),
-                    TextField(
-                      controller: _personNameController,
-                      focusNode: _personNameFocus,
-                      decoration: InputDecoration(
-                        hintText: 'Enter person name',
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                      onSubmitted: (_) {
-                        FocusScope.of(context).requestFocus(_amountFocus);
-                      },
+                    Column(
+                      children: [
+                        TextField(
+                          controller: _personNameController,
+                          focusNode: _personNameFocus,
+                          decoration: InputDecoration(
+                            hintText: 'Enter person name',
+                            prefixIcon: Icon(Icons.person_outline),
+                            suffixIcon: _showSuggestions 
+                                ? IconButton(
+                                    icon: Icon(Icons.clear),
+                                    onPressed: () {
+                                      _personNameController.clear();
+                                      setState(() {
+                                        _showSuggestions = false;
+                                      });
+                                    },
+                                  )
+                                : null,
+                          ),
+                          textCapitalization: TextCapitalization.words,
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (_) {
+                            FocusScope.of(context).requestFocus(_amountFocus);
+                          },
+                        ),
+                        if (_showSuggestions) ...[
+                          SizedBox(height: 8),
+                          Container(
+                            constraints: BoxConstraints(maxHeight: 150),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(0.3),
+                              ),
+                            ),
+                            child: ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: _filteredNames.length,
+                              itemBuilder: (context, index) {
+                                final name = _filteredNames[index];
+                                return ListTile(
+                                  dense: true,
+                                  leading: Icon(
+                                    Icons.person,
+                                    color: Theme.of(context).primaryColor,
+                                    size: 20,
+                                  ),
+                                  title: Text(
+                                    name,
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  onTap: () => _selectSuggestion(name),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     
                     SizedBox(height: 24),

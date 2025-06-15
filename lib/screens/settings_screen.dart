@@ -45,14 +45,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(height: 16),
             _buildNameField(),
             SizedBox(height: 32),
-            
             _buildSectionTitle('Preferences'),
             SizedBox(height: 16),
             _buildCurrencySelector(),
             SizedBox(height: 24),
             _buildThemeSelector(),
+            SizedBox(height: 24),
+            _buildAutoFocusToggle(),
             SizedBox(height: 32),
-            
             _buildSaveButton(),
           ],
         ),
@@ -122,7 +122,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.currency_exchange, color: Theme.of(context).primaryColor),
+              Icon(Icons.currency_exchange,
+                  color: Theme.of(context).primaryColor),
               SizedBox(width: 12),
               Text(
                 'Currency',
@@ -152,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildCurrencyOption(String symbol, String name) {
     final isSelected = _settings.currency == symbol;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -162,12 +163,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? Theme.of(context).primaryColor.withOpacity(0.1)
               : Colors.grey.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? Theme.of(context).primaryColor
                 : Colors.transparent,
             width: 2,
@@ -180,7 +181,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: isSelected 
+                color: isSelected
                     ? Theme.of(context).primaryColor
                     : Colors.grey[600],
               ),
@@ -190,7 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               name,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected 
+                color: isSelected
                     ? Theme.of(context).primaryColor
                     : Colors.grey[600],
               ),
@@ -220,7 +221,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.palette_outlined, color: Theme.of(context).primaryColor),
+              Icon(Icons.palette_outlined,
+                  color: Theme.of(context).primaryColor),
               SizedBox(width: 12),
               Text(
                 'Theme',
@@ -248,7 +250,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildThemeOption(String value, String name, IconData icon) {
     final isSelected = _settings.theme == value;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -258,12 +260,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? Theme.of(context).primaryColor.withOpacity(0.1)
               : Colors.grey.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected 
+            color: isSelected
                 ? Theme.of(context).primaryColor
                 : Colors.transparent,
             width: 2,
@@ -273,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             Icon(
               icon,
-              color: isSelected 
+              color: isSelected
                   ? Theme.of(context).primaryColor
                   : Colors.grey[600],
             ),
@@ -283,7 +285,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: isSelected 
+                color: isSelected
                     ? Theme.of(context).primaryColor
                     : Colors.grey[700],
               ),
@@ -296,6 +298,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAutoFocusToggle() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.keyboard_outlined,
+                  color: Theme.of(context).primaryColor),
+              SizedBox(width: 12),
+              Text(
+                'User Experience',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Auto Focus Amount Field',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Automatically focus the amount field when opening transaction modal',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                value: _settings.autoFocusAmount,
+                onChanged: (value) {
+                  setState(() {
+                    _settings.autoFocusAmount = value;
+                  });
+                },
+                activeColor: Theme.of(context).primaryColor,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -338,14 +412,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     _settings.name = _nameController.text.trim();
     await HiveService.updateUserSettings(_settings);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Settings saved successfully!'),
         backgroundColor: Colors.green,
       ),
     );
-    
+
     Navigator.pop(context);
   }
 }
