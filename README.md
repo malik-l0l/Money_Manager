@@ -53,20 +53,20 @@ instaed 'total given' and 'total taken' replace it with "You owe" which shows th
 when i lock my phone in people transaction screen, when i unlock the UI just crashes, the text are scattered if this bug is fixable, please fix it too
 
 
-
-- fix crash issue
-
-
-- dlt from main screen to delete from people screen
-
-- place toggle inside transaction to add people transaction 
+### DONE
 
 - auto appear name in Person Name 
-
-- insufficient fund
 - automatic cursor go to amount, expense first income second
-implement chart
 - in setting automatic scroll up add transaction window,
+
+### TODO
+
+- place toggle inside transaction to add people transaction 
+- fix crash issue
+- dlt from main screen to delete from people screen
+- insufficient fund
+- implement chart
+
 
 
 ```

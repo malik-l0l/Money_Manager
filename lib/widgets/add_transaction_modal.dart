@@ -17,27 +17,28 @@ class AddTransactionModal extends StatefulWidget {
   _AddTransactionModalState createState() => _AddTransactionModalState();
 }
 
-class _AddTransactionModalState extends State<AddTransactionModal> with TickerProviderStateMixin {
+class _AddTransactionModalState extends State<AddTransactionModal>
+    with TickerProviderStateMixin {
   late TextEditingController _amountController;
   late TextEditingController _reasonController;
   late DateTime _selectedDate;
   bool _isIncome = false; // Default to expense
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
-  
+
   // Focus nodes for better UX
   late FocusNode _amountFocus;
   late FocusNode _reasonFocus;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _slideAnimation = Tween<double>(
       begin: 1.0,
       end: 0.0,
@@ -45,18 +46,19 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _animationController.forward();
-    
+
     // Initialize focus nodes
     _amountFocus = FocusNode();
     _reasonFocus = FocusNode();
-    
+
     if (widget.transaction != null) {
       _amountController = TextEditingController(
         text: widget.transaction!.amount.abs().toStringAsFixed(2),
       );
-      _reasonController = TextEditingController(text: widget.transaction!.reason);
+      _reasonController =
+          TextEditingController(text: widget.transaction!.reason);
       _selectedDate = widget.transaction!.date;
       _isIncome = widget.transaction!.amount > 0;
     } else {
@@ -64,7 +66,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
       _reasonController = TextEditingController();
       _selectedDate = DateTime.now();
     }
-    
+
     // Auto focus amount field if setting is enabled
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final settings = HiveService.getUserSettings();
@@ -73,7 +75,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
       }
     });
   }
-  
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -83,16 +85,17 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
     _reasonFocus.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final settings = HiveService.getUserSettings();
-    
+
     return AnimatedBuilder(
       animation: _slideAnimation,
       builder: (context, child) {
         return Transform.translate(
-          offset: Offset(0, _slideAnimation.value * MediaQuery.of(context).size.height),
+          offset: Offset(
+              0, _slideAnimation.value * MediaQuery.of(context).size.height),
           child: Container(
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
@@ -120,14 +123,16 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                     ),
                     SizedBox(height: 24),
                     Text(
-                      widget.transaction != null ? 'Edit Transaction' : 'Add Transaction',
+                      widget.transaction != null
+                          ? 'Edit Transaction'
+                          : 'Add Transaction',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(height: 32),
-                    
+
                     // Transaction Type Toggle
                     Container(
                       decoration: BoxDecoration(
@@ -147,8 +152,8 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                               child: Container(
                                 padding: EdgeInsets.symmetric(vertical: 16),
                                 decoration: BoxDecoration(
-                                  color: _isIncome 
-                                      ? Colors.green 
+                                  color: _isIncome
+                                      ? Colors.green
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -157,13 +162,17 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                                   children: [
                                     Icon(
                                       Icons.add_circle_outline,
-                                      color: _isIncome ? Colors.white : Colors.green,
+                                      color: _isIncome
+                                          ? Colors.white
+                                          : Colors.green,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
                                       'Income',
                                       style: TextStyle(
-                                        color: _isIncome ? Colors.white : Colors.green,
+                                        color: _isIncome
+                                            ? Colors.white
+                                            : Colors.green,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -184,8 +193,8 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                               child: Container(
                                 padding: EdgeInsets.symmetric(vertical: 16),
                                 decoration: BoxDecoration(
-                                  color: !_isIncome 
-                                      ? Colors.red 
+                                  color: !_isIncome
+                                      ? Colors.red
                                       : Colors.transparent,
                                   borderRadius: BorderRadius.circular(16),
                                 ),
@@ -194,13 +203,17 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                                   children: [
                                     Icon(
                                       Icons.remove_circle_outline,
-                                      color: !_isIncome ? Colors.white : Colors.red,
+                                      color: !_isIncome
+                                          ? Colors.white
+                                          : Colors.red,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
                                       'Expense',
                                       style: TextStyle(
-                                        color: !_isIncome ? Colors.white : Colors.red,
+                                        color: !_isIncome
+                                            ? Colors.white
+                                            : Colors.red,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -212,9 +225,9 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                         ],
                       ),
                     ),
-                    
+
                     SizedBox(height: 24),
-                    
+
                     // Amount Field
                     Text(
                       'Amount',
@@ -227,7 +240,8 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                     TextField(
                       controller: _amountController,
                       focusNode: _amountFocus,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      keyboardType:
+                          TextInputType.numberWithOptions(decimal: true),
                       decoration: InputDecoration(
                         hintText: '0.00',
                         prefixText: settings.currency,
@@ -244,15 +258,16 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                       ),
                       textInputAction: TextInputAction.next,
                       inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                        FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}')),
                       ],
                       onSubmitted: (_) {
                         FocusScope.of(context).requestFocus(_reasonFocus);
                       },
                     ),
-                    
+
                     SizedBox(height: 24),
-                    
+
                     // Reason Field
                     Text(
                       'Reason',
@@ -276,9 +291,9 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                         _saveTransaction();
                       },
                     ),
-                    
+
                     SizedBox(height: 16),
-                    
+
                     // Date Selector
                     Text(
                       'Date',
@@ -301,7 +316,8 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.calendar_today, color: Theme.of(context).primaryColor),
+                            Icon(Icons.calendar_today,
+                                color: Theme.of(context).primaryColor),
                             SizedBox(width: 12),
                             Text(
                               '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
@@ -311,14 +327,15 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                               ),
                             ),
                             Spacer(),
-                            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+                            Icon(Icons.arrow_forward_ios,
+                                size: 16, color: Colors.grey),
                           ],
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: 32),
-                    
+
                     // Save Button
                     SizedBox(
                       width: double.infinity,
@@ -326,11 +343,14 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                       child: ElevatedButton(
                         onPressed: _saveTransaction,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isIncome ? Colors.green : Colors.red,
+                          backgroundColor:
+                              _isIncome ? Colors.green : Colors.red,
                           foregroundColor: Colors.white,
                         ),
                         child: Text(
-                          widget.transaction != null ? 'Update Transaction' : 'Save Transaction',
+                          widget.transaction != null
+                              ? 'Update Transaction'
+                              : 'Save Transaction',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -338,7 +358,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: 16),
                   ],
                 ),
@@ -349,7 +369,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
       },
     );
   }
-  
+
   void _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -360,53 +380,54 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: _isIncome ? Colors.green : Colors.red,
-            ),
+                  primary: _isIncome ? Colors.green : Colors.red,
+                ),
           ),
           child: child!,
         );
       },
     );
-    
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
       });
     }
   }
-  
+
   void _saveTransaction() {
     if (_amountController.text.trim().isEmpty) {
       _showError('Please enter an amount');
       return;
     }
-    
+
     if (_reasonController.text.trim().isEmpty) {
       _showError('Please enter a reason');
       return;
     }
-    
+
     final amount = double.tryParse(_amountController.text);
     if (amount == null || amount <= 0) {
       _showError('Please enter a valid amount');
       return;
     }
-    
+
     final transaction = Transaction(
-      id: widget.transaction?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.transaction?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       date: _selectedDate,
       amount: _isIncome ? amount : -amount,
       reason: _reasonController.text.trim(),
       timestamp: DateTime.now(),
     );
-    
+
     widget.onSave(transaction);
     Navigator.pop(context);
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          widget.transaction != null 
+          widget.transaction != null
               ? 'Transaction updated successfully!'
               : 'Transaction added successfully!',
         ),
@@ -414,7 +435,7 @@ class _AddTransactionModalState extends State<AddTransactionModal> with TickerPr
       ),
     );
   }
-  
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

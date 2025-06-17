@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/hive_service.dart';
+import '../services/people_hive_service.dart';
 import '../models/transaction.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/transaction_card.dart';
 import '../widgets/add_transaction_modal.dart';
+import '../widgets/add_people_transaction_modal.dart';
 import '../widgets/custom_app_bar.dart';
 import 'settings_screen.dart';
 import 'monthly_summary_screen.dart';
@@ -66,11 +68,28 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddTransactionModal,
-        icon: Icon(Icons.add),
-        label: Text('Add Transaction'),
-        backgroundColor: Theme.of(context).primaryColor,
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // People Transaction Button
+          Container(
+            margin: EdgeInsets.only(bottom: 16),
+            child: FloatingActionButton(
+              onPressed: _showAddPeopleTransactionModal,
+              heroTag: "people_fab",
+              backgroundColor: Colors.purple,
+              child: Icon(Icons.people_outline, color: Colors.white),
+            ),
+          ),
+          // Main Transaction Button
+          FloatingActionButton.extended(
+            onPressed: _showAddTransactionModal,
+            heroTag: "main_fab",
+            icon: Icon(Icons.add),
+            label: Text('Add Transaction'),
+            backgroundColor: Theme.of(context).primaryColor,
+          ),
+        ],
       ),
     );
   }
@@ -196,6 +215,20 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showAddPeopleTransactionModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddPeopleTransactionModal(
+        onSave: (transaction) async {
+          await PeopleHiveService.addPeopleTransaction(transaction);
+          _loadData();
+        },
+      ),
+    );
+  }
+
   void _editTransaction(Transaction transaction, int index) {
     showModalBottomSheet(
       context: context,
@@ -224,9 +257,21 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           TextButton(
             onPressed: () async {
-              await HiveService.deleteTransaction(index);
-              Navigator.pop(context);
-              _loadData();
+              final allTransactions = HiveService.getAllTransactions();
+              if (index >= 0 && index < allTransactions.length) {
+                final transaction = allTransactions[index];
+                
+                // Check if this is a people transaction (has _main suffix)
+                if (transaction.id.endsWith('_main')) {
+                  // This is a people transaction, delete from people manager too
+                  await PeopleHiveService.deletePeopleTransactionByMainId(transaction.id);
+                }
+                
+                // Delete the main transaction
+                await HiveService.deleteTransaction(index);
+                Navigator.pop(context);
+                _loadData();
+              }
             },
             child: Text('Delete', style: TextStyle(color: Colors.red)),
           ),
