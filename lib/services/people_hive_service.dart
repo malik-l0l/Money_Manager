@@ -16,8 +16,10 @@ class PeopleHiveService {
   static Future<void> addPeopleTransaction(PeopleTransaction transaction) async {
     await _peopleTransactionsBox.put(transaction.id, transaction);
     
-    // Only add to main transaction history (balance will be updated automatically by the transaction)
-    await _updateMainTransactionHistory(transaction);
+    // Only add to main transaction history if it affects main balance
+    if (transaction.mainBalanceImpact != 0) {
+      await _updateMainTransactionHistory(transaction);
+    }
   }
 
   // Update a people transaction and adjust main transaction history
@@ -25,13 +27,19 @@ class PeopleHiveService {
     final oldTransaction = _peopleTransactionsBox.get(id);
     
     if (oldTransaction != null) {
-      // Remove the old transaction's effect from main history
-      await _removeMainTransactionHistory(oldTransaction);
+      // Remove the old transaction's effect from main history (if it had any)
+      if (oldTransaction.mainBalanceImpact != 0) {
+        await _removeMainTransactionHistory(oldTransaction);
+      }
     }
     
     // Apply the new transaction
     await _peopleTransactionsBox.put(id, newTransaction);
-    await _updateMainTransactionHistory(newTransaction);
+    
+    // Add to main history if it affects main balance
+    if (newTransaction.mainBalanceImpact != 0) {
+      await _updateMainTransactionHistory(newTransaction);
+    }
   }
 
   // Delete a people transaction and adjust main transaction history
@@ -39,8 +47,10 @@ class PeopleHiveService {
     final transaction = _peopleTransactionsBox.get(id);
     
     if (transaction != null) {
-      // Remove the transaction's effect from main history
-      await _removeMainTransactionHistory(transaction);
+      // Remove the transaction's effect from main history (if it had any)
+      if (transaction.mainBalanceImpact != 0) {
+        await _removeMainTransactionHistory(transaction);
+      }
       await _peopleTransactionsBox.delete(id);
     }
   }
@@ -64,19 +74,12 @@ class PeopleHiveService {
 
   // Add entry to main transaction history (balance will be updated automatically)
   static Future<void> _updateMainTransactionHistory(PeopleTransaction peopleTransaction) async {
-    // Calculate the amount for main transaction (negative for giving, positive for taking)
-    final mainTransactionAmount = peopleTransaction.isGiven 
-        ? -peopleTransaction.amount  // Giving money reduces main balance
-        : peopleTransaction.amount;  // Taking money increases main balance
-    
     // Create a main transaction entry
     final mainTransaction = Transaction(
       id: '${peopleTransaction.id}_main',
       date: peopleTransaction.date,
-      amount: mainTransactionAmount,
-      reason: peopleTransaction.isGiven 
-          ? 'Give money to "${peopleTransaction.personName}" for "${peopleTransaction.reason}"'
-          : 'Take money from "${peopleTransaction.personName}" for "${peopleTransaction.reason}"',
+      amount: peopleTransaction.mainBalanceImpact,
+      reason: _getMainTransactionReason(peopleTransaction),
       timestamp: peopleTransaction.timestamp,
     );
     
@@ -89,6 +92,27 @@ class PeopleHiveService {
     // Find and remove the corresponding main transaction
     final mainTransactionId = '${peopleTransaction.id}_main';
     await HiveService.deleteTransactionById(mainTransactionId);
+  }
+
+  // Generate appropriate reason text for main transaction
+  static String _getMainTransactionReason(PeopleTransaction peopleTransaction) {
+    switch (peopleTransaction.transactionType) {
+      case 'give':
+        return 'Give money to "${peopleTransaction.personName}" for "${peopleTransaction.reason}"';
+      case 'take':
+        return 'Take money from "${peopleTransaction.personName}" for "${peopleTransaction.reason}"';
+      case 'owe':
+        return '${peopleTransaction.personName} spent for you: "${peopleTransaction.reason}"';
+      case 'claim':
+        return 'Your money with ${peopleTransaction.personName}: "${peopleTransaction.reason}"';
+      default:
+        // Fallback for legacy data
+        if (peopleTransaction.isGiven) {
+          return 'Give money to "${peopleTransaction.personName}" for "${peopleTransaction.reason}"';
+        } else {
+          return 'Take money from "${peopleTransaction.personName}" for "${peopleTransaction.reason}"';
+        }
+    }
   }
 
   // Get all people transactions
@@ -152,17 +176,31 @@ class PeopleHiveService {
     );
   }
 
-  // Get total amount you've given to all people
+  // Get total amount you've given to all people (including owe transactions)
   static double getTotalGiven() {
     return _peopleTransactionsBox.values
-        .where((transaction) => transaction.isGiven)
+        .where((transaction) => transaction.transactionType == 'give')
         .fold<double>(0.0, (sum, transaction) => sum + transaction.amount);
   }
 
   // Get total amount you've taken from all people
   static double getTotalTaken() {
     return _peopleTransactionsBox.values
-        .where((transaction) => !transaction.isGiven)
+        .where((transaction) => transaction.transactionType == 'take')
+        .fold<double>(0.0, (sum, transaction) => sum + transaction.amount);
+  }
+
+  // Get total amount you owe (from owe transactions)
+  static double getTotalOwed() {
+    return _peopleTransactionsBox.values
+        .where((transaction) => transaction.transactionType == 'owe')
+        .fold<double>(0.0, (sum, transaction) => sum + transaction.amount);
+  }
+
+  // Get total amount you can claim
+  static double getTotalClaimable() {
+    return _peopleTransactionsBox.values
+        .where((transaction) => transaction.transactionType == 'claim')
         .fold<double>(0.0, (sum, transaction) => sum + transaction.amount);
   }
 

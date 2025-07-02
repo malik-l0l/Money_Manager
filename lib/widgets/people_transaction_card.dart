@@ -16,10 +16,8 @@ class PeopleTransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isGiven = transaction.isGiven;
-    final amountColor = isGiven ? Colors.red : Colors.green;
-    final actionText = isGiven ? 'Given' : 'Taken';
-
+    final typeData = _getTransactionTypeData(transaction.transactionType);
+    
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -49,12 +47,12 @@ class PeopleTransactionCard extends StatelessWidget {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: amountColor.withOpacity(0.1),
+                        color: typeData['color'].withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
-                        isGiven ? Icons.arrow_upward : Icons.arrow_downward,
-                        color: amountColor,
+                        typeData['icon'],
+                        color: typeData['color'],
                         size: 24,
                       ),
                     ),
@@ -91,15 +89,15 @@ class PeopleTransactionCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: amountColor,
+                            color: typeData['color'],
                           ),
                         ),
                         SizedBox(height: 4),
                         Text(
-                          actionText,
+                          typeData['title'],
                           style: TextStyle(
                             fontSize: 12,
-                            color: amountColor,
+                            color: typeData['color'],
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -129,7 +127,7 @@ class PeopleTransactionCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: amountColor.withOpacity(0.1),
+                    color: typeData['color'].withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -137,7 +135,7 @@ class PeopleTransactionCard extends StatelessWidget {
                       Icon(
                         Icons.info_outline,
                         size: 16,
-                        color: amountColor,
+                        color: typeData['color'],
                       ),
                       SizedBox(width: 8),
                       Expanded(
@@ -145,7 +143,7 @@ class PeopleTransactionCard extends StatelessWidget {
                           transaction.displayText,
                           style: TextStyle(
                             fontSize: 14,
-                            color: amountColor,
+                            color: typeData['color'],
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -153,11 +151,76 @@ class PeopleTransactionCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                // Show main balance impact if any
+                if (transaction.mainBalanceImpact != 0) ...[
+                  SizedBox(height: 8),
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Main balance: ${transaction.mainBalanceImpact > 0 ? '+' : ''}₹${transaction.mainBalanceImpact.abs().toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Map<String, dynamic> _getTransactionTypeData(String type) {
+    switch (type) {
+      case 'give':
+        return {
+          'title': 'Given',
+          'icon': Icons.arrow_upward,
+          'color': Colors.red,
+        };
+      case 'take':
+        return {
+          'title': 'Taken',
+          'icon': Icons.arrow_downward,
+          'color': Colors.green,
+        };
+      case 'owe':
+        return {
+          'title': 'They Paid',
+          'icon': Icons.credit_card,
+          'color': Colors.orange,
+        };
+      case 'claim':
+        return {
+          'title': 'Your Money',
+          'icon': Icons.account_balance_wallet,
+          'color': Colors.blue,
+        };
+      default:
+        // Fallback for legacy data
+        return {
+          'title': 'Legacy',
+          'icon': Icons.help_outline,
+          'color': Colors.grey,
+        };
+    }
   }
 }

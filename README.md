@@ -65,15 +65,8 @@ when i lock my phone in people transaction screen, when i unlock the UI just cra
 - dlt from main screen to delete from people screen
 - make people transaction button in home screen
 
-### TODO
+#### 01-07-25
 
-- fix crash issue
-- implement chart
-- messages from bottom up -remove it 
-
-```
-
-now please do these modifications : 
 - in home screen we have to FABs "+ Add Transaction" and "people transaction" buttons, please modify them.
 like this, place []"Icons.person_add" on left] and ["+" icon on right] in bottom-center side by side of the home screen,
 if there is a better way than this to implement this which will greatly improve User Experience, then please do that 
@@ -87,6 +80,34 @@ if there is a better way than this to implement this which will greatly improve 
 - when the setting "Auto focus amount field is" is on, focus in the people transaction modal too, currently it is available only in "add_transaction_modal",
 
 - show date just like this "dd-mm-yy HH:MM AM/PM [in 12 hr format]" currently it is showing "today" "yesterday"...
+
+### TODO
+
+- fix crash issue
+- implement chart
+
+```
+
+now please do these modifications : 
+
+- quotes tips on the top, where "good <> <name> is placed"
+
+- research Breadcrumb navigation for complex flows
+
+- Data Visualization - Mini charts showing spending trends
+
+- Progressive onboarding cards showing app value proposition
+
+- Contextual tips based on time of day/week
+
+- 85% higher new user activation through guided first actions, Reduces abandonment during initial setup phase
+
+- Balance update animations with positive/negative feedback
+
+- widget
+
+- long press "+" show food, travel, or 4 types of transaction
+
 
 - fix the crash issue in people manager screen, when i people screen, and close the phone, and when i reopen it the letters,words are scrambled. please fix this issue
 

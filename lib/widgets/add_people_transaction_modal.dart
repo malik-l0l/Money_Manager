@@ -27,7 +27,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   late TextEditingController _reasonController;
   late TextEditingController _personNameController;
   late DateTime _selectedDate;
-  bool _isGiven = true; // true = give money, false = take money
+  String _transactionType = 'owe'; // Default to 'owe' as requested
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
 
@@ -40,6 +40,48 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   List<String> _allPeopleNames = [];
   List<String> _filteredNames = [];
   bool _showSuggestions = false;
+
+  // Transaction type definitions in the requested order
+  final List<String> _transactionOrder = ['owe', 'give', 'take', 'claim'];
+
+  final Map<String, Map<String, dynamic>> _transactionTypes = {
+    'owe': {
+      'title': 'Owe',
+      'description': 'Someone spent money for you',
+      'example': 'Friend paid for your food',
+      'icon': Icons.credit_card,
+      'color': Colors.orange,
+      'balanceText': 'You owe them',
+      'mainBalanceChange': 'No change to balance',
+    },
+    'give': {
+      'title': 'Give',
+      'description': 'You gave money to someone',
+      'example': 'Friend needed money',
+      'icon': Icons.arrow_upward,
+      'color': Colors.red,
+      'balanceText': 'They owe you',
+      'mainBalanceChange': 'Reduces your balance',
+    },
+    'take': {
+      'title': 'Take',
+      'description': 'You took money from someone',
+      'example': 'You needed money',
+      'icon': Icons.arrow_downward,
+      'color': Colors.green,
+      'balanceText': 'You owe them',
+      'mainBalanceChange': 'Increases your balance',
+    },
+    'claim': {
+      'title': 'Claim',
+      'description': 'Your money is with someone',
+      'example': 'Salary sent to friend',
+      'icon': Icons.account_balance_wallet,
+      'color': Colors.blue,
+      'balanceText': 'They owe you',
+      'mainBalanceChange': 'No change to balance',
+    },
+  };
 
   @override
   void initState() {
@@ -78,7 +120,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       _personNameController =
           TextEditingController(text: widget.transaction!.personName);
       _selectedDate = widget.transaction!.date;
-      _isGiven = widget.transaction!.isGiven;
+      _transactionType = widget.transaction!.transactionType;
     } else {
       _amountController = TextEditingController();
       _reasonController = TextEditingController();
@@ -202,97 +244,8 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                     ),
                     SizedBox(height: 32),
 
-                    // Transaction Type Toggle
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isGiven = true;
-                                });
-                                HapticFeedback.lightImpact();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                decoration: BoxDecoration(
-                                  color: _isGiven
-                                      ? Colors.red
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.arrow_upward,
-                                      color:
-                                          _isGiven ? Colors.white : Colors.red,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Give',
-                                      style: TextStyle(
-                                        color: _isGiven
-                                            ? Colors.white
-                                            : Colors.red,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isGiven = false;
-                                });
-                                HapticFeedback.lightImpact();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                decoration: BoxDecoration(
-                                  color: !_isGiven
-                                      ? Colors.green
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.arrow_downward,
-                                      color: !_isGiven
-                                          ? Colors.white
-                                          : Colors.green,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Take',
-                                      style: TextStyle(
-                                        color: !_isGiven
-                                            ? Colors.white
-                                            : Colors.green,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // Transaction Type Selection - 1x4 Grid
+                    _buildTransactionTypeSelector(),
 
                     SizedBox(height: 24),
 
@@ -316,13 +269,13 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                         prefixStyle: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: _isGiven ? Colors.red : Colors.green,
+                          color: _transactionTypes[_transactionType]!['color'],
                         ),
                       ),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: _isGiven ? Colors.red : Colors.green,
+                        color: _transactionTypes[_transactionType]!['color'],
                       ),
                       textInputAction: TextInputAction.next,
                       inputFormatters: [
@@ -422,7 +375,8 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                       controller: _reasonController,
                       focusNode: _reasonFocus,
                       decoration: InputDecoration(
-                        hintText: 'What was this for?',
+                        hintText:
+                            _transactionTypes[_transactionType]!['example'],
                         prefixIcon: Icon(Icons.description_outlined),
                       ),
                       textCapitalization: TextCapitalization.sentences,
@@ -478,50 +432,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                     SizedBox(height: 32),
 
                     // Preview Text
-                    Container(
-                      padding: EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: (_isGiven ? Colors.red : Colors.green)
-                            .withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: (_isGiven ? Colors.red : Colors.green)
-                              .withOpacity(0.3),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                color: _isGiven ? Colors.red : Colors.green,
-                              ),
-                              SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _getPreviewText(),
-                                  style: TextStyle(
-                                    color: _isGiven ? Colors.red : Colors.green,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            _getMainBalanceImpact(),
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    _buildPreviewCard(),
 
                     SizedBox(height: 24),
 
@@ -532,7 +443,8 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                       child: ElevatedButton(
                         onPressed: _saveTransaction,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isGiven ? Colors.red : Colors.green,
+                          backgroundColor:
+                              _transactionTypes[_transactionType]!['color'],
                           foregroundColor: Colors.white,
                         ),
                         child: Text(
@@ -558,33 +470,215 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     );
   }
 
-  String _getPreviewText() {
+  Widget _buildTransactionTypeSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Transaction Type',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 12),
+        // 1x4 Grid - Single row with 4 columns
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: _transactionOrder.map((type) {
+              final isLast = type == _transactionOrder.last;
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(right: isLast ? 0 : 4),
+                  child: _buildTransactionTypeOption(type),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        SizedBox(height: 12),
+        // Help text for selected type
+        Container(
+          padding: EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color:
+                _transactionTypes[_transactionType]!['color'].withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _transactionTypes[_transactionType]!['color']
+                  .withOpacity(0.3),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: _transactionTypes[_transactionType]!['color'],
+                    size: 16,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    _transactionTypes[_transactionType]!['description'],
+                    style: TextStyle(
+                      color: _transactionTypes[_transactionType]!['color'],
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Example: ${_transactionTypes[_transactionType]!['example']}',
+                style: TextStyle(
+                  color: _transactionTypes[_transactionType]!['color'],
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTransactionTypeOption(String type) {
+    final typeData = _transactionTypes[type]!;
+    final isSelected = _transactionType == type;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _transactionType = type;
+        });
+        HapticFeedback.lightImpact();
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? typeData['color'] : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              typeData['icon'],
+              color: isSelected ? Colors.white : typeData['color'],
+              size: 20,
+            ),
+            SizedBox(height: 4),
+            Text(
+              typeData['title'],
+              style: TextStyle(
+                color: isSelected ? Colors.white : typeData['color'],
+                fontWeight: FontWeight.w600,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewCard() {
+    final typeData = _transactionTypes[_transactionType]!;
     final amount =
         _amountController.text.isNotEmpty ? _amountController.text : '0';
     final person = _personNameController.text.isNotEmpty
         ? _personNameController.text
         : 'Person';
 
-    if (_isGiven) {
-      return 'You will see: "Take ₹$amount from $person"';
-    } else {
-      return 'You will see: "Give ₹$amount back to $person"';
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: typeData['color'].withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: typeData['color'].withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.preview,
+                color: typeData['color'],
+                size: 16,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Preview',
+                style: TextStyle(
+                  color: typeData['color'],
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 8),
+          Text(
+            _getPreviewText(amount, person),
+            style: TextStyle(
+              color: typeData['color'],
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            _getMainBalanceImpact(amount, person),
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getPreviewText(String amount, String person) {
+    switch (_transactionType) {
+      case 'give':
+        return 'People Balance: $person owes you ₹$amount';
+      case 'take':
+        return 'People Balance: You owe $person ₹$amount';
+      case 'owe':
+        return 'People Balance: You owe $person ₹$amount';
+      case 'claim':
+        return 'People Balance: $person owes you ₹$amount';
+      default:
+        return '';
     }
   }
 
-  String _getMainBalanceImpact() {
-    final amount =
-        _amountController.text.isNotEmpty ? _amountController.text : '0';
-    final person = _personNameController.text.isNotEmpty
-        ? _personNameController.text
-        : 'Person';
+  String _getMainBalanceImpact(String amount, String person) {
     final reason =
         _reasonController.text.isNotEmpty ? _reasonController.text : 'reason';
 
-    if (_isGiven) {
-      return 'Main balance: -₹$amount | History: "Give money to "$person" for "$reason""';
-    } else {
-      return 'Main balance: +₹$amount | History: "Take money from "$person" for "$reason""';
+    switch (_transactionType) {
+      case 'give':
+        return 'Main balance: -₹$amount | History: "Give money to "$person" for "$reason""';
+      case 'take':
+        return 'Main balance: +₹$amount | History: "Take money from "$person" for "$reason""';
+      case 'owe':
+        return 'Main balance: No change | History: "$person spent ₹$amount for you for $reason"';
+      case 'claim':
+        return 'Main balance: No change | History: "$person has ₹$amount of your money for $reason"';
+      default:
+        return '';
     }
   }
 
@@ -598,7 +692,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: _isGiven ? Colors.red : Colors.green,
+                  primary: _transactionTypes[_transactionType]!['color'],
                 ),
           ),
           child: child!,
@@ -643,7 +737,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       reason: _reasonController.text.trim(),
       date: _selectedDate,
       timestamp: DateTime.now(),
-      isGiven: _isGiven,
+      transactionType: _transactionType,
     );
 
     widget.onSave(transaction);
