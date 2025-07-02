@@ -7,65 +7,84 @@ import '../widgets/transaction_card.dart';
 import '../widgets/add_transaction_modal.dart';
 import '../widgets/add_people_transaction_modal.dart';
 import '../widgets/custom_app_bar.dart';
+import '../widgets/custom_snackbar.dart';
 import 'settings_screen.dart';
 import 'monthly_summary_screen.dart';
 import 'people_manager_screen.dart';
 import 'package:flutter/rendering.dart';
+
 
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   List<Transaction> _transactions = [];
   double _balance = 0.0;
-  final ScrollController _scrollController = ScrollController();
-  bool _showFAB = true;
-  int _batchSize = 20;
-  int _loadedItems = 0;
+  late ScrollController _scrollController;
+  late AnimationController _fabAnimationController;
+  late Animation<double> _fabAnimation;
+  bool _showFabs = true;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
-    _scrollController.addListener(_scrollListener);
+    _loadData();
+    
+    // Initialize scroll controller and animation
+    _scrollController = ScrollController();
+    _fabAnimationController = AnimationController(
+      duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    _fabAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fabAnimationController,
+      curve: Curves.easeInOut,
+    ));
+    
+    _fabAnimationController.forward();
+    
+    // Add scroll listener for FAB animation
+    _scrollController.addListener(_onScroll);
   }
 
-  void _loadInitialData() {
-    final allTransactions = HiveService.getAllTransactions();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+      // Scrolling down - hide FABs
+      if (_showFabs) {
+        setState(() {
+          _showFabs = false;
+        });
+        _fabAnimationController.reverse();
+      }
+    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+      // Scrolling up - show FABs
+      if (!_showFabs) {
+        setState(() {
+          _showFabs = true;
+        });
+        _fabAnimationController.forward();
+      }
+    }
+  }
+
+  void _loadData() {
     setState(() {
-      _transactions = allTransactions.take(_batchSize).toList();
-      _loadedItems = _transactions.length;
+      _transactions = HiveService.getAllTransactions();
       _balance = HiveService.getBalance();
     });
-  }
-
-  void _loadMoreTransactions() {
-    final allTransactions = HiveService.getAllTransactions();
-    if (_loadedItems >= allTransactions.length) return;
-
-    final nextBatch =
-        allTransactions.skip(_loadedItems).take(_batchSize).toList();
-    setState(() {
-      _transactions.addAll(nextBatch);
-      _loadedItems = _transactions.length;
-    });
-  }
-
-  void _scrollListener() {
-    if (_scrollController.position.userScrollDirection ==
-        ScrollDirection.reverse) {
-      if (_showFAB) setState(() => _showFAB = false);
-    } else if (_scrollController.position.userScrollDirection ==
-        ScrollDirection.forward) {
-      if (!_showFAB) setState(() => _showFAB = true);
-    }
-
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      _loadMoreTransactions();
-    }
   }
 
   @override
@@ -77,66 +96,60 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             CustomAppBar(
-              onSettingsPressed: _navigateToSettings,
-              onSummaryPressed: _navigateToSummary,
-              onPeoplePressed: _navigateToPeopleManager,
+              onSettingsPressed: () => _navigateToSettings(),
+              onSummaryPressed: () => _navigateToSummary(),
+              onPeoplePressed: () => _navigateToPeopleManager(),
             ),
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: ListView(
-                  controller: _scrollController,
-                  children: [
-                    SizedBox(height: 16),
-                    _buildGreeting(settings.name),
-                    SizedBox(height: 24),
-                    BalanceCard(
-                      balance: _balance,
-                      currency: settings.currency,
+              child: CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildGreeting(settings.name),
+                          SizedBox(height: 24),
+                          BalanceCard(
+                            balance: _balance,
+                            currency: settings.currency,
+                          ),
+                          SizedBox(height: 32),
+                          _buildTransactionsHeader(),
+                          SizedBox(height: 16),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: 32),
-                    _buildRecentTransactions(settings.currency),
-                    SizedBox(height: 32),
-                  ],
-                ),
+                  ),
+                  _buildTransactionsList(settings.currency),
+                  // Add some bottom padding for FABs
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: 100),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: AnimatedOpacity(
-        opacity: _showFAB ? 1.0 : 0.0,
-        duration: Duration(milliseconds: 300),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FloatingActionButton(
-              heroTag: 'people_fab',
-              onPressed: _showAddPeopleTransactionModal,
-              backgroundColor: Colors.purple,
-              child: Icon(Icons.people_outline, color: Colors.white),
-            ),
-            SizedBox(width: 16),
-            FloatingActionButton.extended(
-              heroTag: 'main_fab',
-              onPressed: _showAddTransactionModal,
-              icon: Icon(Icons.add),
-              label: Text('Add Transaction'),
-              backgroundColor: Theme.of(context).primaryColor,
-            ),
-          ],
-        ),
-      ),
+      floatingActionButton: _buildFloatingActionButtons(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
   Widget _buildGreeting(String name) {
     final hour = DateTime.now().hour;
-    String greeting = (hour < 12)
-        ? 'Good Morning'
-        : (hour < 17)
-            ? 'Good Afternoon'
-            : 'Good Evening';
+    String greeting;
+    
+    if (hour < 12) {
+      greeting = 'Good Morning';
+    } else if (hour < 17) {
+      greeting = 'Good Afternoon';
+    } else {
+      greeting = 'Good Evening';
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,65 +157,157 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(
           '$greeting,',
           style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w300,
-              color: Colors.grey[600]),
+            fontSize: 24,
+            fontWeight: FontWeight.w300,
+            color: Colors.grey[600],
+          ),
         ),
         Text(
           name,
-          style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 32,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildRecentTransactions(String currency) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildTransactionsHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Recent Transactions',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          'All Transactions',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        SizedBox(height: 16),
-        if (_transactions.isEmpty)
-          SizedBox(
-            height: 200,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.receipt_long_outlined,
-                      size: 64, color: Colors.grey[400]),
-                  SizedBox(height: 16),
-                  Text('No transactions yet',
-                      style: TextStyle(fontSize: 18, color: Colors.grey[600])),
-                  SizedBox(height: 8),
-                  Text('Tap the + button to add your first transaction',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500])),
-                ],
-              ),
-            ),
-          )
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemCount: _transactions.length,
-            itemBuilder: (context, index) {
-              final transaction = _transactions[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: TransactionCard(
-                  transaction: transaction,
-                  currency: currency,
-                  onEdit: () => _editTransaction(transaction, index),
-                  onDelete: () => _deleteTransaction(index),
-                ),
-              );
-            },
+        if (_transactions.isNotEmpty)
+          TextButton(
+            onPressed: () => _navigateToSummary(),
+            child: Text('Monthly View'),
           ),
       ],
+    );
+  }
+
+  Widget _buildTransactionsList(String currency) {
+    if (_transactions.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          height: 300,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 64,
+                  color: Colors.grey[400],
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'No transactions yet',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Tap the + button to add your first transaction',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[500],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final transaction = _transactions[index];
+          return Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TransactionCard(
+              transaction: transaction,
+              currency: currency,
+              onEdit: () => _editTransaction(transaction, index),
+              onDelete: () => _deleteTransaction(index),
+            ),
+          );
+        },
+        childCount: _transactions.length,
+      ),
+    );
+  }
+
+  Widget _buildFloatingActionButtons() {
+    return AnimatedBuilder(
+      animation: _fabAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, (1 - _fabAnimation.value) * 100),
+          child: Opacity(
+            opacity: _fabAnimation.value,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // People Transaction FAB
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.purple.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton(
+                    onPressed: _showAddPeopleTransactionModal,
+                    heroTag: "people_fab",
+                    backgroundColor: Colors.purple,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    child: Icon(Icons.person_add, size: 24),
+                  ),
+                ),
+                SizedBox(width: 16),
+                // Main Transaction FAB
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context).primaryColor.withOpacity(0.3),
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: FloatingActionButton(
+                    onPressed: _showAddTransactionModal,
+                    heroTag: "main_fab",
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    child: Icon(Icons.add, size: 24),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -211,10 +316,11 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddTransactionModal(
+      builder: (context) => AddTransactionModal(
         onSave: (transaction) async {
           await HiveService.addTransaction(transaction);
-          _loadInitialData();
+          _loadData();
+          _showCustomSnackBar('Transaction added successfully!', SnackBarType.success);
         },
       ),
     );
@@ -225,10 +331,11 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddPeopleTransactionModal(
+      builder: (context) => AddPeopleTransactionModal(
         onSave: (transaction) async {
           await PeopleHiveService.addPeopleTransaction(transaction);
-          _loadInitialData();
+          _loadData();
+          _showCustomSnackBar('People transaction added successfully!', SnackBarType.success);
         },
       ),
     );
@@ -239,11 +346,12 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddTransactionModal(
+      builder: (context) => AddTransactionModal(
         transaction: transaction,
         onSave: (updatedTransaction) async {
           await HiveService.updateTransaction(index, updatedTransaction);
-          _loadInitialData();
+          _loadData();
+          _showCustomSnackBar('Transaction updated successfully!', SnackBarType.success);
         },
       ),
     );
@@ -252,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _deleteTransaction(int index) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (context) => AlertDialog(
         title: Text('Delete Transaction'),
         content: Text('Are you sure you want to delete this transaction?'),
         actions: [
@@ -265,13 +373,18 @@ class _HomeScreenState extends State<HomeScreen> {
               final allTransactions = HiveService.getAllTransactions();
               if (index >= 0 && index < allTransactions.length) {
                 final transaction = allTransactions[index];
+                
+                // Check if this is a people transaction (has _main suffix)
                 if (transaction.id.endsWith('_main')) {
-                  await PeopleHiveService.deletePeopleTransactionByMainId(
-                      transaction.id);
+                  // This is a people transaction, delete from people manager too
+                  await PeopleHiveService.deletePeopleTransactionByMainId(transaction.id);
                 }
+                
+                // Delete the main transaction
                 await HiveService.deleteTransaction(index);
                 Navigator.pop(context);
-                _loadInitialData();
+                _loadData();
+                _showCustomSnackBar('Transaction deleted successfully!', SnackBarType.info);
               }
             },
             child: Text('Delete', style: TextStyle(color: Colors.red)),
@@ -281,25 +394,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showCustomSnackBar(String message, SnackBarType type) {
+    CustomSnackBar.show(context, message, type);
+  }
+
   void _navigateToSettings() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => SettingsScreen()))
-        .then((_) => _loadInitialData());
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SettingsScreen()),
+    ).then((_) => _loadData());
   }
 
   void _navigateToSummary() {
     Navigator.push(
-        context, MaterialPageRoute(builder: (_) => MonthlySummaryScreen()));
+      context,
+      MaterialPageRoute(builder: (context) => MonthlySummaryScreen()),
+    );
   }
 
   void _navigateToPeopleManager() {
     Navigator.push(
-            context, MaterialPageRoute(builder: (_) => PeopleManagerScreen()))
-        .then((_) => _loadInitialData());
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+      context,
+      MaterialPageRoute(builder: (context) => PeopleManagerScreen()),
+    ).then((_) => _loadData());
   }
 }

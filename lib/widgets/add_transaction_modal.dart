@@ -22,7 +22,7 @@ class _AddTransactionModalState extends State<AddTransactionModal>
   late TextEditingController _amountController;
   late TextEditingController _reasonController;
   late DateTime _selectedDate;
-  bool _isIncome = false; // Default to expense
+  bool _isIncome = false; // Default to expense (left side)
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
 
@@ -133,7 +133,7 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                     ),
                     SizedBox(height: 32),
 
-                    // Transaction Type Toggle
+                    // Transaction Type Toggle - Expense on left, Income on right
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.grey.withOpacity(0.1),
@@ -145,48 +145,7 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                             child: GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  _isIncome = true;
-                                });
-                                HapticFeedback.lightImpact();
-                              },
-                              child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                decoration: BoxDecoration(
-                                  color: _isIncome
-                                      ? Colors.green
-                                      : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.add_circle_outline,
-                                      color: _isIncome
-                                          ? Colors.white
-                                          : Colors.green,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Income',
-                                      style: TextStyle(
-                                        color: _isIncome
-                                            ? Colors.white
-                                            : Colors.green,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isIncome = false;
+                                  _isIncome = false; // Expense
                                 });
                                 HapticFeedback.lightImpact();
                               },
@@ -214,6 +173,47 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                                         color: !_isIncome
                                             ? Colors.white
                                             : Colors.red,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _isIncome = true; // Income
+                                });
+                                HapticFeedback.lightImpact();
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                decoration: BoxDecoration(
+                                  color: _isIncome
+                                      ? Colors.green
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_circle_outline,
+                                      color: _isIncome
+                                          ? Colors.white
+                                          : Colors.green,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Income',
+                                      style: TextStyle(
+                                        color: _isIncome
+                                            ? Colors.white
+                                            : Colors.green,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -423,17 +423,6 @@ class _AddTransactionModalState extends State<AddTransactionModal>
 
     widget.onSave(transaction);
     Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          widget.transaction != null
-              ? 'Transaction updated successfully!'
-              : 'Transaction added successfully!',
-        ),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   void _showError(String message) {

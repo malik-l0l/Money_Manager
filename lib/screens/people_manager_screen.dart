@@ -3,6 +3,7 @@ import '../services/people_hive_service.dart';
 import '../models/person_summary.dart';
 import '../widgets/add_people_transaction_modal.dart';
 import '../widgets/person_summary_card.dart';
+import '../widgets/custom_snackbar.dart';
 import 'person_detail_screen.dart';
 
 class PeopleManagerScreen extends StatefulWidget {
@@ -10,7 +11,7 @@ class PeopleManagerScreen extends StatefulWidget {
   _PeopleManagerScreenState createState() => _PeopleManagerScreenState();
 }
 
-class _PeopleManagerScreenState extends State<PeopleManagerScreen> with WidgetsBindingObserver {
+class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
   List<PersonSummary> _peopleSummaries = [];
   double _youOwe = 0.0;
   double _owesYou = 0.0;
@@ -18,48 +19,34 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> with WidgetsB
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     _loadData();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    
-    // Refresh data when app resumes to prevent UI crashes
-    if (state == AppLifecycleState.resumed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _loadData();
-        }
-      });
-    }
   }
 
   void _loadData() {
     if (!mounted) return;
-    
-    setState(() {
-      _peopleSummaries = PeopleHiveService.getAllPeopleSummaries();
-      
-      // Calculate amounts you owe and amounts owed to you
-      _youOwe = 0.0;
-      _owesYou = 0.0;
-      
-      for (final person in _peopleSummaries) {
-        if (person.totalBalance > 0) {
-          _owesYou += person.totalBalance; // People owe you
-        } else if (person.totalBalance < 0) {
-          _youOwe += person.totalBalance.abs(); // You owe people
+
+    try {
+      setState(() {
+        _peopleSummaries = PeopleHiveService.getAllPeopleSummaries();
+
+        // Calculate amounts you owe and amounts owed to you
+        _youOwe = 0.0;
+        _owesYou = 0.0;
+
+        for (final person in _peopleSummaries) {
+          if (person.totalBalance > 0) {
+            _owesYou += person.totalBalance; // People owe you
+          } else if (person.totalBalance < 0) {
+            _youOwe += person.totalBalance.abs(); // You owe people
+          }
         }
+      });
+    } catch (e) {
+      // Handle any potential errors gracefully
+      if (mounted) {
+        CustomSnackBar.show(context, 'Error loading data', SnackBarType.error);
       }
-    });
+    }
   }
 
   @override
@@ -124,7 +111,8 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> with WidgetsB
     );
   }
 
-  Widget _buildStatCard(String title, double amount, Color color, IconData icon) {
+  Widget _buildStatCard(
+      String title, double amount, Color color, IconData icon) {
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -238,6 +226,8 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> with WidgetsB
         onSave: (transaction) async {
           await PeopleHiveService.addPeopleTransaction(transaction);
           _loadData();
+          CustomSnackBar.show(context, 'People transaction added successfully!',
+              SnackBarType.success);
         },
       ),
     );
