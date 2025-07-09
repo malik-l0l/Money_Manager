@@ -24,13 +24,14 @@ class PeopleTransactionAdapter extends TypeAdapter<PeopleTransaction> {
       date: fields[4] as DateTime,
       timestamp: fields[5] as DateTime,
       isGiven: fields[6] as bool,
+      transactionType: fields[7] == null ? 'give' : fields[7] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, PeopleTransaction obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class PeopleTransactionAdapter extends TypeAdapter<PeopleTransaction> {
       ..writeByte(5)
       ..write(obj.timestamp)
       ..writeByte(6)
-      ..write(obj.isGiven);
+      ..write(obj.isGiven)
+      ..writeByte(7)
+      ..write(obj.transactionType);
   }
 
   @override

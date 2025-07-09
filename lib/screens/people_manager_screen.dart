@@ -12,7 +12,8 @@ class PeopleManagerScreen extends StatefulWidget {
 }
 
 class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
-  List<PersonSummary> _peopleSummaries = [];
+  List<PersonSummary> _activePeople = [];
+  List<PersonSummary> _settledPeople = [];
   double _youOwe = 0.0;
   double _owesYou = 0.0;
 
@@ -26,14 +27,18 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
     if (!mounted) return;
 
     try {
+      final allPeople = PeopleHiveService.getAllPeopleSummaries();
+
       setState(() {
-        _peopleSummaries = PeopleHiveService.getAllPeopleSummaries();
+        // Separate active and settled people
+        _activePeople = allPeople.where((person) => !person.isSettled).toList();
+        _settledPeople = allPeople.where((person) => person.isSettled).toList();
 
         // Calculate amounts you owe and amounts owed to you
         _youOwe = 0.0;
         _owesYou = 0.0;
 
-        for (final person in _peopleSummaries) {
+        for (final person in _activePeople) {
           if (person.totalBalance > 0) {
             _owesYou += person.totalBalance; // People owe you
           } else if (person.totalBalance < 0) {
@@ -73,7 +78,11 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
             children: [
               _buildQuickStats(),
               SizedBox(height: 32),
-              _buildPeopleList(),
+              _buildActivePeopleList(),
+              if (_settledPeople.isNotEmpty) ...[
+                SizedBox(height: 32),
+                _buildSettledPeopleList(),
+              ],
             ],
           ),
         ),
@@ -156,19 +165,29 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
     );
   }
 
-  Widget _buildPeopleList() {
+  Widget _buildActivePeopleList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'People (${_peopleSummaries.length})',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.people,
+              color: Theme.of(context).primaryColor,
+              size: 24,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Active',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         SizedBox(height: 16),
-        if (_peopleSummaries.isEmpty)
+        if (_activePeople.isEmpty)
           Container(
             height: 200,
             child: Center(
@@ -182,7 +201,7 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'No transactions with people yet',
+                    'No active transactions with people yet',
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
@@ -204,15 +223,57 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
           ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: _peopleSummaries.length,
+            itemCount: _activePeople.length,
             itemBuilder: (context, index) {
-              final person = _peopleSummaries[index];
+              final person = _activePeople[index];
               return PersonSummaryCard(
                 person: person,
                 onTap: () => _navigateToPersonDetail(person.name),
+                showTimeAgo: false, // Don't show time ago in people manager
               );
             },
           ),
+      ],
+    );
+  }
+
+  Widget _buildSettledPeopleList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.grey[600],
+              size: 24,
+            ),
+            SizedBox(width: 8),
+            Text(
+              'Settled',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: _settledPeople.length,
+          itemBuilder: (context, index) {
+            final person = _settledPeople[index];
+            return PersonSummaryCard(
+              person: person,
+              onTap: () => _navigateToPersonDetail(person.name),
+              showTimeAgo: false, // Don't show time ago in people manager
+              isSettled: true, // Special styling for settled people
+            );
+          },
+        ),
       ],
     );
   }

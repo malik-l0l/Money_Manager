@@ -5,17 +5,21 @@ import '../utils/date_formatter.dart';
 class PersonSummaryCard extends StatelessWidget {
   final PersonSummary person;
   final VoidCallback onTap;
+  final bool showTimeAgo;
+  final bool isSettled;
 
   const PersonSummaryCard({
     Key? key,
     required this.person,
     required this.onTap,
+    this.showTimeAgo = true,
+    this.isSettled = false,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final balanceColor = person.isSettled
-        ? Colors.grey
+        ? Colors.green
         : person.owesYou
             ? Colors.green
             : Colors.red;
@@ -23,15 +27,21 @@ class PersonSummaryCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: isSettled
+            ? Colors.green.withOpacity(0.05)
+            : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
+        border:
+            isSettled ? Border.all(color: Colors.green.withOpacity(0.2)) : null,
+        boxShadow: isSettled
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -69,6 +79,7 @@ class PersonSummaryCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
+                          color: isSettled ? Colors.green[700] : null,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -89,21 +100,23 @@ class PersonSummaryCard extends StatelessWidget {
                               color: Colors.grey[600],
                             ),
                           ),
-                          SizedBox(width: 12),
-                          Icon(
-                            Icons.access_time,
-                            size: 14,
-                            color: Colors.grey[600],
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            DateFormatter.formatRelativeTime(
-                                person.lastTransactionDate),
-                            style: TextStyle(
-                              fontSize: 12,
+                          if (showTimeAgo) ...[
+                            SizedBox(width: 12),
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
                               color: Colors.grey[600],
                             ),
-                          ),
+                            SizedBox(width: 4),
+                            Text(
+                              DateFormatter.formatRelativeTime(
+                                  person.lastTransactionDate),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ],
