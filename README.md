@@ -81,10 +81,30 @@ if there is a better way than this to implement this which will greatly improve 
 
 - show date just like this "dd-mm-yy HH:MM AM/PM [in 12 hr format]" currently it is showing "today" "yesterday"...
 
+#### 01-07-25
+
+- removed unwanted + in person_details
+- fixed owe claim not persisting issue
+- fixed owe claim not in "You Owe" "owe you" fields
+- improved people manager icons 
+- improved settled design - planning to expand this design to others
+
+
+
 ### TODO
+
+- take the design of settled cards
 
 - fix crash issue
 - implement chart
+
+
+
+
+
+
+
+
 
 ```
 

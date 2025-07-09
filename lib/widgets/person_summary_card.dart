@@ -61,7 +61,7 @@ class PersonSummaryCard extends StatelessWidget {
                   ),
                   child: Icon(
                     person.isSettled
-                        ? Icons.check_circle_outline
+                        ? Icons.check
                         : person.owesYou
                             ? Icons.trending_up
                             : Icons.trending_down,

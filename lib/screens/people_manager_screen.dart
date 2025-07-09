@@ -172,8 +172,8 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
         Row(
           children: [
             Icon(
-              Icons.people,
-              color: Theme.of(context).primaryColor,
+              Icons.account_circle,
+              color: Colors.grey[350],
               size: 24,
             ),
             SizedBox(width: 8),
@@ -182,6 +182,7 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: Colors.grey[350],
               ),
             ),
           ],
@@ -244,7 +245,7 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
         Row(
           children: [
             Icon(
-              Icons.check_circle,
+              Icons.verified,
               color: Colors.grey[600],
               size: 24,
             ),
