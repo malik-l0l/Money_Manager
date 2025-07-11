@@ -11,20 +11,21 @@ class MonthlySummaryScreen extends StatefulWidget {
 
 class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
   DateTime _selectedMonth = DateTime.now();
-  
+
   @override
   Widget build(BuildContext context) {
     final settings = HiveService.getUserSettings();
-    final monthlyTransactions = HiveService.getMonthlyTransactions(_selectedMonth);
-    
+    final monthlyTransactions =
+        HiveService.getMonthlyTransactions(_selectedMonth);
+
     final totalIncome = monthlyTransactions
         .where((t) => t.amount > 0)
         .fold(0.0, (sum, t) => sum + t.amount);
-    
+
     final totalExpenses = monthlyTransactions
         .where((t) => t.amount < 0)
         .fold(0.0, (sum, t) => sum + t.amount.abs());
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Monthly Summary'),
@@ -77,7 +78,8 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
           IconButton(
             onPressed: () {
               setState(() {
-                _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
+                _selectedMonth =
+                    DateTime(_selectedMonth.year, _selectedMonth.month - 1);
               });
             },
             icon: Icon(Icons.chevron_left),
@@ -92,7 +94,8 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
           IconButton(
             onPressed: () {
               setState(() {
-                _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+                _selectedMonth =
+                    DateTime(_selectedMonth.year, _selectedMonth.month + 1);
               });
             },
             icon: Icon(Icons.chevron_right),
@@ -128,14 +131,15 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     );
   }
 
-  Widget _buildSummaryCard(String title, double amount, String currency, Color color, IconData icon) {
+  Widget _buildSummaryCard(String title, double amount, String currency,
+      Color color, IconData icon) {
     return Container(
       padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -172,7 +176,8 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     );
   }
 
-  Widget _buildTransactionsList(List<Transaction> transactions, String currency) {
+  Widget _buildTransactionsList(
+      List<Transaction> transactions, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -237,14 +242,14 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: Theme.of(context).primaryColor,
-            ),
+                  primary: Theme.of(context).primaryColor,
+                ),
           ),
           child: child!,
         );
       },
     );
-    
+
     if (picked != null && picked != _selectedMonth) {
       setState(() {
         _selectedMonth = DateTime(picked.year, picked.month);

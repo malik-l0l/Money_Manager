@@ -93,7 +93,18 @@ if there is a better way than this to implement this which will greatly improve 
 
 ### TODO
 
-- take the design of settled cards
+```
+Analyze the code in lib folder very carefully and please do these modifications in the dart code :
+
+- in Transaction History in person detail screen, remove "Pay <money> back to <name>" and "Collect <money> from <name>" from the cards, also remove "main balance: <money>" from the cards
+
+- i really liked the design,theme of settled cards in people manager, implement the same design,theme to all other cards in home screen and people manager screen, for income use green theme, for expense use red theme in home_screen, for "owes you" green theme, for "you owe" red theme and for settled grey theme in people manager screen, for "owe" use current orange like theme, for claim use the current blue like theme in person_detail screen. also improve the card design in monthly summary
+
+
+
+
+
+```
 
 - fix crash issue
 - implement chart

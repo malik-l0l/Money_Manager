@@ -21,15 +21,12 @@ class PeopleTransactionCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: typeData['color'].withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
+        border: Border.all(
+          color: typeData['color'].withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
@@ -123,63 +120,6 @@ class PeopleTransactionCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                SizedBox(height: 12),
-                Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: typeData['color'].withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: typeData['color'],
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          transaction.displayText,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: typeData['color'],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Show main balance impact if any
-                if (transaction.mainBalanceImpact != 0) ...[
-                  SizedBox(height: 8),
-                  Container(
-                    padding: EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.account_balance_wallet,
-                          size: 14,
-                          color: Colors.grey[600],
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Main balance: ${transaction.mainBalanceImpact > 0 ? '+' : ''}₹${transaction.mainBalanceImpact.abs().toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),

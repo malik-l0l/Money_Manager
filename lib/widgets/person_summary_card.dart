@@ -19,7 +19,7 @@ class PersonSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final balanceColor = person.isSettled
-        ? Colors.green
+        ? Colors.grey
         : person.owesYou
             ? Colors.green
             : Colors.red;
@@ -27,21 +27,12 @@ class PersonSummaryCard extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: isSettled
-            ? Colors.green.withOpacity(0.05)
-            : Theme.of(context).cardColor,
+        color: balanceColor.withOpacity(0.05),
         borderRadius: BorderRadius.circular(16),
-        border:
-            isSettled ? Border.all(color: Colors.green.withOpacity(0.2)) : null,
-        boxShadow: isSettled
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
-                ),
-              ],
+        border: Border.all(
+          color: balanceColor.withOpacity(0.2),
+          width: 1,
+        ),
       ),
       child: Material(
         color: Colors.transparent,
