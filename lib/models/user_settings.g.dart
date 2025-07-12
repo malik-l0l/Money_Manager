@@ -21,13 +21,14 @@ class UserSettingsAdapter extends TypeAdapter<UserSettings> {
       currency: fields[1] as String,
       theme: fields[2] as String,
       autoFocusAmount: fields[3] == null ? false : fields[3] as bool,
+      cardTheme: fields[4] == null ? 'theme1' : fields[4] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserSettings obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class UserSettingsAdapter extends TypeAdapter<UserSettings> {
       ..writeByte(2)
       ..write(obj.theme)
       ..writeByte(3)
-      ..write(obj.autoFocusAmount);
+      ..write(obj.autoFocusAmount)
+      ..writeByte(4)
+      ..write(obj.cardTheme);
   }
 
   @override

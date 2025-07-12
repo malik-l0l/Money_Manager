@@ -5,8 +5,10 @@ import '../widgets/transaction_card.dart';
 import '../utils/date_formatter.dart';
 
 class MonthlySummaryScreen extends StatefulWidget {
+  const MonthlySummaryScreen({Key? key}) : super(key: key);
+
   @override
-  _MonthlySummaryScreenState createState() => _MonthlySummaryScreenState();
+  State<MonthlySummaryScreen> createState() => _MonthlySummaryScreenState();
 }
 
 class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
@@ -28,29 +30,29 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Monthly Summary'),
+        title: const Text('Monthly Summary'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.calendar_month),
+            icon: const Icon(Icons.calendar_month),
             onPressed: _selectMonth,
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildMonthSelector(),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             _buildSummaryCards(totalIncome, totalExpenses, settings.currency),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             _buildTransactionsList(monthlyTransactions, settings.currency),
           ],
         ),
@@ -60,7 +62,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
   Widget _buildMonthSelector() {
     return Container(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -68,7 +70,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -82,27 +84,35 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
                     DateTime(_selectedMonth.year, _selectedMonth.month - 1);
               });
             },
-            icon: Icon(Icons.chevron_left),
+            icon: const Icon(Icons.chevron_left),
           ),
           Text(
             DateFormatter.formatMonthYear(_selectedMonth),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           IconButton(
-            onPressed: () {
-              setState(() {
-                _selectedMonth =
-                    DateTime(_selectedMonth.year, _selectedMonth.month + 1);
-              });
-            },
-            icon: Icon(Icons.chevron_right),
+            onPressed: _isNextMonthDisabled()
+                ? null
+                : () {
+                    setState(() {
+                      _selectedMonth = DateTime(
+                          _selectedMonth.year, _selectedMonth.month + 1);
+                    });
+                  },
+            icon: const Icon(Icons.chevron_right),
           ),
         ],
       ),
     );
+  }
+
+  bool _isNextMonthDisabled() {
+    final now = DateTime.now();
+    final nextMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
+    return nextMonth.isAfter(DateTime(now.year, now.month));
   }
 
   Widget _buildSummaryCards(double income, double expenses, String currency) {
@@ -117,7 +127,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
             Icons.trending_up,
           ),
         ),
-        SizedBox(width: 16),
+        const SizedBox(width: 16),
         Expanded(
           child: _buildSummaryCard(
             'Total Expenses',
@@ -133,47 +143,115 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
 
   Widget _buildSummaryCard(String title, double amount, String currency,
       Color color, IconData icon) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
+    final settings = HiveService.getUserSettings();
+
+    if (settings.cardTheme == 'theme1') {
+      // Theme 1 - Balance card style
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color,
+              color.withOpacity(0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
                   title,
                   style: TextStyle(
                     fontSize: 14,
-                    color: color,
-                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.9),
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Text(
-            '$currency${amount.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 12),
+            Text(
+              '$currency${amount.toStringAsFixed(2)}',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // Theme 2 - Original design
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.3),
+            width: 1,
           ),
-        ],
-      ),
-    );
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '$currency${amount.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   Widget _buildTransactionsList(
@@ -183,14 +261,14 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
       children: [
         Text(
           'Transactions (${transactions.length})',
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         if (transactions.isEmpty)
-          Container(
+          SizedBox(
             height: 200,
             child: Center(
               child: Column(
@@ -201,7 +279,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
                     size: 64,
                     color: Colors.grey[400],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'No transactions this month',
                     style: TextStyle(
@@ -216,15 +294,15 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
         else
           ListView.builder(
             shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: transactions.length,
             itemBuilder: (context, index) {
               final transaction = transactions[index];
               return TransactionCard(
                 transaction: transaction,
                 currency: currency,
-                onEdit: () => _editTransaction(transaction, index),
-                onDelete: () => _deleteTransaction(index),
+                onEdit: null, // Read-only mode
+                onDelete: null, // Read-only mode
               );
             },
           ),
@@ -237,7 +315,8 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
       context: context,
       initialDate: _selectedMonth,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDatePickerMode: DatePickerMode.year,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -255,34 +334,5 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
         _selectedMonth = DateTime(picked.year, picked.month);
       });
     }
-  }
-
-  void _editTransaction(Transaction transaction, int index) {
-    // Implementation for editing transaction
-    // This would open the same modal as in home screen
-  }
-
-  void _deleteTransaction(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Transaction'),
-        content: Text('Are you sure you want to delete this transaction?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await HiveService.deleteTransaction(index);
-              Navigator.pop(context);
-              setState(() {});
-            },
-            child: Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
   }
 }

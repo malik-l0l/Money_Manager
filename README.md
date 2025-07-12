@@ -90,17 +90,27 @@ if there is a better way than this to implement this which will greatly improve 
 - improved settled design - planning to expand this design to others
 
 
+#### 12-01-25
+
+- in Transaction History in person detail screen, remove "Pay <money> back to <name>" and "Collect <money> from <name>" from the cards, also remove "main balance: <money>" from the cards
+
+- place "owes you" on the left side and "you owe" on the right side in people manager
+
+- remove + prefix from income cards
+
+- i really liked the design,theme of settled cards in people manager, implement the same design,theme to all other cards in home screen and people manager screen, for income use green theme, for expense use red theme in home_screen, for "owes you" green theme, for "you owe" red theme and for settled grey theme in people manager screen, for "owe" use current orange like theme, for claim use the current blue like theme in person_detail screen. also improve the card design in monthly summary
+
+- make this new theme "theme 1" and old theme "theme 2" in the settings, where user can switch between settings, make theme 1 as default. make this settings persist even if i close and reopen the app
+
+- in theme 1 do this modification : the theme of "You owe" "owes you" "total income" "total expenses" must be like the current balance card on the home screen, for "you owe" and "total expenses" in red theme , and others in green theme
+
+- please give me errorless code
+
 
 ### TODO
 
 ```
 Analyze the code in lib folder very carefully and please do these modifications in the dart code :
-
-- in Transaction History in person detail screen, remove "Pay <money> back to <name>" and "Collect <money> from <name>" from the cards, also remove "main balance: <money>" from the cards
-
-- i really liked the design,theme of settled cards in people manager, implement the same design,theme to all other cards in home screen and people manager screen, for income use green theme, for expense use red theme in home_screen, for "owes you" green theme, for "you owe" red theme and for settled grey theme in people manager screen, for "owe" use current orange like theme, for claim use the current blue like theme in person_detail screen. also improve the card design in monthly summary
-
-
 
 
 

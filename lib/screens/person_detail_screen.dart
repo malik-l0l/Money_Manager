@@ -8,7 +8,8 @@ import '../widgets/custom_snackbar.dart';
 class PersonDetailScreen extends StatefulWidget {
   final String personName;
 
-  const PersonDetailScreen({Key? key, required this.personName}) : super(key: key);
+  const PersonDetailScreen({Key? key, required this.personName})
+      : super(key: key);
 
   @override
   _PersonDetailScreenState createState() => _PersonDetailScreenState();
@@ -26,10 +27,11 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
   void _loadData() {
     if (!mounted) return;
-    
+
     try {
       setState(() {
-        _transactions = PeopleHiveService.getTransactionsForPerson(widget.personName);
+        _transactions =
+            PeopleHiveService.getTransactionsForPerson(widget.personName);
         _balance = PeopleHiveService.getBalanceForPerson(widget.personName);
       });
     } catch (e) {
@@ -44,7 +46,7 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   Widget build(BuildContext context) {
     final isPositive = _balance >= 0;
     final balanceColor = isPositive ? Colors.green : Colors.red;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.personName),
@@ -54,8 +56,6 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           icon: Icon(Icons.arrow_back_ios),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -78,8 +78,9 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
   Widget _buildBalanceCard() {
     final isPositive = _balance >= 0;
-    final color = _balance == 0 ? Colors.grey : (isPositive ? Colors.green : Colors.red);
-    
+    final color =
+        _balance == 0 ? Colors.grey : (isPositive ? Colors.green : Colors.red);
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(24),
@@ -122,10 +123,10 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
-                  _balance == 0 
-                      ? Icons.check_circle 
-                      : isPositive 
-                          ? Icons.trending_up 
+                  _balance == 0
+                      ? Icons.check_circle
+                      : isPositive
+                          ? Icons.trending_up
                           : Icons.trending_down,
                   color: Colors.white,
                   size: 20,
@@ -144,10 +145,10 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
           ),
           SizedBox(height: 8),
           Text(
-            _balance == 0 
-                ? 'All settled up!' 
-                : isPositive 
-                    ? '${widget.personName} owes you' 
+            _balance == 0
+                ? 'All settled up!'
+                : isPositive
+                    ? '${widget.personName} owes you'
                     : 'You owe ${widget.personName}',
             style: TextStyle(
               fontSize: 14,
@@ -224,7 +225,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         onSave: (transaction) async {
           await PeopleHiveService.addPeopleTransaction(transaction);
           _loadData();
-          CustomSnackBar.show(context, 'People transaction added successfully!', SnackBarType.success);
+          CustomSnackBar.show(context, 'People transaction added successfully!',
+              SnackBarType.success);
         },
       ),
     );
@@ -239,11 +241,12 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         transaction: transaction,
         onSave: (updatedTransaction) async {
           await PeopleHiveService.updatePeopleTransaction(
-            transaction.id, 
+            transaction.id,
             updatedTransaction,
           );
           _loadData();
-          CustomSnackBar.show(context, 'People transaction updated successfully!', SnackBarType.success);
+          CustomSnackBar.show(context,
+              'People transaction updated successfully!', SnackBarType.success);
         },
       ),
     );
@@ -265,7 +268,8 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
               await PeopleHiveService.deletePeopleTransaction(transaction.id);
               Navigator.pop(context);
               _loadData();
-              CustomSnackBar.show(context, 'Transaction deleted successfully!', SnackBarType.success);
+              CustomSnackBar.show(context, 'Transaction deleted successfully!',
+                  SnackBarType.success);
             },
             child: Text('Delete', style: TextStyle(color: Colors.red)),
           ),
