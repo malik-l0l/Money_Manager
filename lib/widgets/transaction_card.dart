@@ -22,6 +22,7 @@ class TransactionCard extends StatelessWidget {
     final settings = HiveService.getUserSettings();
     final isIncome = transaction.amount > 0;
     final amountColor = isIncome ? Colors.green : Colors.red;
+    final amountPrefix = isIncome ? '' : ''; 
     
     if (settings.cardTheme == 'theme1') {
       return Container(
@@ -76,20 +77,6 @@ class TransactionCard extends StatelessWidget {
                         Row(
                           children: [
                             Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              DateFormatter.formatDate(transaction.date),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Icon(
                               Icons.access_time,
                               size: 14,
                               color: Colors.grey[600],
@@ -111,7 +98,7 @@ class TransactionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '$currency${transaction.amount.abs().toStringAsFixed(2)}',
+                        '$amountPrefix$currency${transaction.amount.abs().toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -197,20 +184,6 @@ class TransactionCard extends StatelessWidget {
                         SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(
-                              Icons.calendar_today,
-                              size: 14,
-                              color: Colors.grey[600],
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              DateFormatter.formatDate(transaction.date),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(width: 12),
                             Icon(
                               Icons.access_time,
                               size: 14,

@@ -106,12 +106,14 @@ if there is a better way than this to implement this which will greatly improve 
 
 - please give me errorless code
 
+- modify home screen, place date outside
+
 
 ### TODO
 
 ```
 Analyze the code in lib folder very carefully and please do these modifications in the dart code :
-
+- please give me errorless code 
 
 
 ```
