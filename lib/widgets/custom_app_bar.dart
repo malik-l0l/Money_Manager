@@ -25,7 +25,7 @@ class CustomAppBar extends StatelessWidget {
         'New day, new light'
       ],
       // Morning (9-11 AM)
-       'morning': [
+      'morning': [
         'Good morning!',
         'Bright morning!',
         'Hello, sunshine',
@@ -45,7 +45,7 @@ class CustomAppBar extends StatelessWidget {
       'evening': [
         'Good evening',
         'Evening',
-        'Winding down'
+        'Winding down',
         'Good evening!',
         'Evening calm',
         'Unwind time',
@@ -53,7 +53,10 @@ class CustomAppBar extends StatelessWidget {
       ],
       // Night (8 PM+)
       'night': [
-        'Time to relax'
+        'Missed you',
+        'Look who’s here',
+        'Welcome back',
+        'Time to relax',
         'Nighty night',
         'Rest easy',
         'Peaceful night'
