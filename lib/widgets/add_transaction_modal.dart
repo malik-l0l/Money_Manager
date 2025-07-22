@@ -6,11 +6,13 @@ import '../services/hive_service.dart';
 class AddTransactionModal extends StatefulWidget {
   final Transaction? transaction;
   final Function(Transaction) onSave;
+  final bool? forceIncome;
 
   const AddTransactionModal({
     Key? key,
     this.transaction,
     required this.onSave,
+    this.forceIncome,
   }) : super(key: key);
 
   @override
@@ -65,6 +67,8 @@ class _AddTransactionModalState extends State<AddTransactionModal>
       _amountController = TextEditingController();
       _reasonController = TextEditingController();
       _selectedDate = DateTime.now();
+      // Set income mode if forceIncome is true
+      _isIncome = widget.forceIncome ?? false;
     }
 
     // Auto focus amount field if setting is enabled
@@ -72,6 +76,18 @@ class _AddTransactionModalState extends State<AddTransactionModal>
       final settings = HiveService.getUserSettings();
       if (settings.autoFocusAmount && widget.transaction == null) {
         FocusScope.of(context).requestFocus(_amountFocus);
+      }
+      
+      // Show snackbar hint for long press income mode
+      if (widget.forceIncome == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('💡 Long press detected! Switched to Income mode'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     });
   }

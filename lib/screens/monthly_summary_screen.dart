@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/hive_service.dart';
 import '../models/transaction.dart';
+import '../models/daily_transaction_group.dart';
 import '../widgets/transaction_card.dart';
+import '../widgets/date_header.dart';
 import '../utils/date_formatter.dart';
 
 class MonthlySummaryScreen extends StatefulWidget {
@@ -13,12 +15,77 @@ class MonthlySummaryScreen extends StatefulWidget {
 
 class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
   DateTime _selectedMonth = DateTime.now();
+  List<DailyTransactionGroup> _displayedGroups = [];
+  List<DailyTransactionGroup> _allGroups = [];
+  int _currentPage = 0;
+  bool _isLoadingMore = false;
+  static const int _itemsPerPage = 10;
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+    _loadMonthlyData();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      _loadMoreGroups();
+    }
+  }
+
+  void _loadMonthlyData() {
+    final monthlyTransactions =
+        HiveService.getMonthlyTransactions(_selectedMonth);
+    setState(() {
+      _allGroups =
+          DailyTransactionGroup.groupTransactionsByDate(monthlyTransactions);
+      _currentPage = 0;
+      _displayedGroups = [];
+      _loadMoreGroups();
+    });
+  }
+
+  void _loadMoreGroups() {
+    if (_isLoadingMore || _displayedGroups.length >= _allGroups.length) return;
+
+    setState(() {
+      _isLoadingMore = true;
+    });
+
+    Future.delayed(Duration(milliseconds: 100), () {
+      if (mounted) {
+        setState(() {
+          final startIndex = _currentPage * _itemsPerPage;
+          final endIndex =
+              (startIndex + _itemsPerPage).clamp(0, _allGroups.length);
+
+          if (startIndex < _allGroups.length) {
+            _displayedGroups.addAll(_allGroups.sublist(startIndex, endIndex));
+            _currentPage++;
+          }
+
+          _isLoadingMore = false;
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final settings = HiveService.getUserSettings();
     final monthlyTransactions =
         HiveService.getMonthlyTransactions(_selectedMonth);
+    HiveService.getMonthlyTransactions(_selectedMonth);
 
     final totalIncome = monthlyTransactions
         .where((t) => t.amount > 0)
@@ -45,6 +112,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +121,14 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
             const SizedBox(height: 24),
             _buildSummaryCards(totalIncome, totalExpenses, settings.currency),
             const SizedBox(height: 32),
-            _buildTransactionsList(monthlyTransactions, settings.currency),
+            _buildGroupedTransactionsList(settings.currency),
+            if (_isLoadingMore)
+              Container(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
           ],
         ),
       ),
@@ -113,6 +188,11 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     final now = DateTime.now();
     final nextMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
     return nextMonth.isAfter(DateTime(now.year, now.month));
+  }
+
+  int _findTransactionIndex(Transaction transaction) {
+    final allTransactions = HiveService.getMonthlyTransactions(_selectedMonth);
+    return allTransactions.indexWhere((t) => t.id == transaction.id);
   }
 
   Widget _buildSummaryCards(double income, double expenses, String currency) {
@@ -254,7 +334,80 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     }
   }
 
-  Widget _buildTransactionsList(
+  Widget _buildGroupedTransactionsList(String currency) {
+    final allTransactions = HiveService.getMonthlyTransactions(_selectedMonth);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Transactions (${allTransactions.length})',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (allTransactions.isEmpty)
+          SizedBox(
+            height: 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No transactions this month',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Column(
+            children: _displayedGroups.map((group) {
+              return Column(
+                children: [
+                  // Date header
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 0),
+                    child: DateHeader(
+                      date: group.date,
+                      totalIncome: group.totalIncome,
+                      totalExpenses: group.totalExpenses,
+                    ),
+                  ),
+                  // Transactions for this date
+                  ...group.transactions.map((transaction) {
+                    final transactionIndex = _findTransactionIndex(transaction);
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                      child: TransactionCard(
+                        transaction: transaction,
+                        currency: HiveService.getUserSettings().currency,
+                        onEdit: null, // Read-only mode
+                        onDelete: null, // Read-only mode
+                      ),
+                    );
+                  }).toList(),
+                ],
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildOldTransactionsList(
       List<Transaction> transactions, String currency) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,6 +485,7 @@ class _MonthlySummaryScreenState extends State<MonthlySummaryScreen> {
     if (picked != null && picked != _selectedMonth) {
       setState(() {
         _selectedMonth = DateTime(picked.year, picked.month);
+        _loadMonthlyData(); // Reload data for new month
       });
     }
   }
