@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends StatefulWidget {
   final VoidCallback? onSettingsPressed;
   final VoidCallback? onSummaryPressed;
   final VoidCallback? onPeoplePressed;
@@ -13,6 +13,19 @@ class CustomAppBar extends StatelessWidget {
     this.onPeoplePressed,
     this.userName,
   }) : super(key: key);
+
+  @override
+  _CustomAppBarState createState() => _CustomAppBarState();
+}
+
+class _CustomAppBarState extends State<CustomAppBar> {
+  late String _fixedGreeting;
+
+  @override
+  void initState() {
+    super.initState();
+    _fixedGreeting = _getGreeting();
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -36,10 +49,10 @@ class CustomAppBar extends StatelessWidget {
       // Afternoon (12-4 PM)
       'afternoon': [
         'Good afternoon!',
-        'Hope you’re well',
+        "Hope you're well",
         'Shining bright?',
         'Midday boost!',
-        'Happy you’re back'
+        "Happy you're back"
       ],
       // Evening (5-7 PM)
       'evening': [
@@ -54,7 +67,7 @@ class CustomAppBar extends StatelessWidget {
       // Night (8 PM+)
       'night': [
         'Missed you',
-        'Look who’s here',
+        "Look who's here",
         'Welcome back',
         'Time to relax',
         'Nighty night',
@@ -71,7 +84,7 @@ class CustomAppBar extends StatelessWidget {
       // Welcome back (random)
       'welcome': [
         'Missed you',
-        'Look who’s here',
+        "Look who's here",
         'Welcome back',
         'Great to see you',
         'Hello there',
@@ -121,7 +134,7 @@ class CustomAppBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
@@ -140,16 +153,16 @@ class CustomAppBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_getGreeting()},',
+                  '${_fixedGreeting},',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w300,
                     color: Colors.grey[600],
                   ),
                 ),
-                if (userName != null && userName!.isNotEmpty)
+                if (widget.userName != null && widget.userName!.isNotEmpty)
                   Text(
-                    userName!,
+                    widget.userName!,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -160,9 +173,9 @@ class CustomAppBar extends StatelessWidget {
           ),
           Row(
             children: [
-              if (onPeoplePressed != null)
+              if (widget.onPeoplePressed != null)
                 IconButton(
-                  onPressed: onPeoplePressed,
+                  onPressed: widget.onPeoplePressed,
                   icon: Container(
                     width: 44,
                     height: 44,
@@ -185,9 +198,9 @@ class CustomAppBar extends StatelessWidget {
                   ),
                 ),
               SizedBox(width: 8),
-              if (onSummaryPressed != null)
+              if (widget.onSummaryPressed != null)
                 IconButton(
-                  onPressed: onSummaryPressed,
+                  onPressed: widget.onSummaryPressed,
                   icon: Container(
                     width: 44,
                     height: 44,
@@ -210,9 +223,9 @@ class CustomAppBar extends StatelessWidget {
                   ),
                 ),
               SizedBox(width: 8),
-              if (onSettingsPressed != null)
+              if (widget.onSettingsPressed != null)
                 IconButton(
-                  onPressed: onSettingsPressed,
+                  onPressed: widget.onSettingsPressed,
                   icon: Container(
                     width: 44,
                     height: 44,

@@ -38,14 +38,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _loadData();
-    
+
     // Initialize scroll controller and animation
     _scrollController = ScrollController();
     _fabAnimationController = AnimationController(
       duration: Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _fabAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -53,9 +53,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       parent: _fabAnimationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _fabAnimationController.forward();
-    
+
     // Add scroll listener for FAB animation and pagination
     _scrollController.addListener(_onScroll);
   }
@@ -69,14 +69,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onScroll() {
     // FAB animation logic
-    if (_scrollController.position.userScrollDirection == ScrollDirection.reverse) {
+    if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
       if (_showFabs) {
         setState(() {
           _showFabs = false;
         });
         _fabAnimationController.reverse();
       }
-    } else if (_scrollController.position.userScrollDirection == ScrollDirection.forward) {
+    } else if (_scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
       if (!_showFabs) {
         setState(() {
           _showFabs = true;
@@ -86,7 +88,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
 
     // Pagination logic
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
       _loadMoreGroups();
     }
   }
@@ -95,7 +98,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _allTransactions = HiveService.getAllTransactions();
       _balance = HiveService.getBalance();
-      _allGroups = DailyTransactionGroup.groupTransactionsByDate(_allTransactions);
+      _allGroups =
+          DailyTransactionGroup.groupTransactionsByDate(_allTransactions);
       _currentPage = 0;
       _displayedGroups = [];
       _loadMoreGroups();
@@ -114,13 +118,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (mounted) {
         setState(() {
           final startIndex = _currentPage * _itemsPerPage;
-          final endIndex = (startIndex + _itemsPerPage).clamp(0, _allGroups.length);
-          
+          final endIndex =
+              (startIndex + _itemsPerPage).clamp(0, _allGroups.length);
+
           if (startIndex < _allGroups.length) {
             _displayedGroups.addAll(_allGroups.sublist(startIndex, endIndex));
             _currentPage++;
           }
-          
+
           _isLoadingMore = false;
         });
       }
@@ -155,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             balance: _balance,
                             currency: settings.currency,
                           ),
-                          SizedBox(height: 24),
+                          SizedBox(height: 5),
                         ],
                       ),
                     ),
@@ -226,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       delegate: SliverChildBuilderDelegate(
         (context, groupIndex) {
           if (groupIndex >= _displayedGroups.length) return null;
-          
+
           final group = _displayedGroups[groupIndex];
           final List<Widget> children = [];
 
@@ -246,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           for (int i = 0; i < group.transactions.length; i++) {
             final transaction = group.transactions[i];
             final transactionIndex = _findTransactionIndex(transaction);
-            
+
             children.add(
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -317,15 +322,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ],
                   ),
                   child: GestureDetector(
-                    onTap: () => _showAddTransactionModal(false), // false = expense (default)
-                    onLongPress: () => _showAddTransactionModal(true), // true = income
+                    onTap: () => _showAddTransactionModal(
+                        false), // false = expense (default)
+                    onLongPress: () =>
+                        _showAddTransactionModal(true), // true = income
                     child: FloatingActionButton(
                       onPressed: null, // Handled by GestureDetector
-                    heroTag: "main_fab",
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    child: Icon(Icons.add, size: 24),
+                      heroTag: "main_fab",
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      child: Icon(Icons.add, size: 24),
                     ),
                   ),
                 ),
@@ -342,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     if (forceIncome == true) {
       HapticFeedback.mediumImpact();
     }
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -352,7 +359,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         onSave: (transaction) async {
           await HiveService.addTransaction(transaction);
           _loadData();
-          CustomSnackBar.show(context, 'Transaction added successfully!', SnackBarType.success);
+          CustomSnackBar.show(
+              context, 'Transaction added successfully!', SnackBarType.success);
         },
       ),
     );
@@ -367,7 +375,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         onSave: (transaction) async {
           await PeopleHiveService.addPeopleTransaction(transaction);
           _loadData();
-          CustomSnackBar.show(context, 'People transaction added successfully!', SnackBarType.success);
+          CustomSnackBar.show(context, 'People transaction added successfully!',
+              SnackBarType.success);
         },
       ),
     );
@@ -375,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _editTransaction(Transaction transaction, int index) {
     if (index == -1) return; // Transaction not found
-    
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -385,7 +394,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         onSave: (updatedTransaction) async {
           await HiveService.updateTransaction(index, updatedTransaction);
           _loadData();
-          CustomSnackBar.show(context, 'Transaction updated successfully!', SnackBarType.success);
+          CustomSnackBar.show(context, 'Transaction updated successfully!',
+              SnackBarType.success);
         },
       ),
     );
@@ -393,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _deleteTransaction(int index) {
     if (index == -1) return; // Transaction not found
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -407,18 +417,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           TextButton(
             onPressed: () async {
               final transaction = _allTransactions[index];
-              
+
               // Check if this is a people transaction (has _main suffix)
               if (transaction.id.endsWith('_main')) {
                 // This is a people transaction, delete from people manager too
-                await PeopleHiveService.deletePeopleTransactionByMainId(transaction.id);
+                await PeopleHiveService.deletePeopleTransactionByMainId(
+                    transaction.id);
               }
-              
+
               // Delete the main transaction
               await HiveService.deleteTransaction(index);
               Navigator.pop(context);
               _loadData();
-              CustomSnackBar.show(context, 'Transaction deleted successfully!', SnackBarType.info);
+              CustomSnackBar.show(context, 'Transaction deleted successfully!',
+                  SnackBarType.info);
             },
             child: Text('Delete', style: TextStyle(color: Colors.red)),
           ),
