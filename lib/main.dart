@@ -3,11 +3,13 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'models/transaction.dart';
 import 'models/user_settings.dart';
 import 'models/people_transaction.dart';
+import 'models/person_contact.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'themes/app_theme.dart';
 import 'services/hive_service.dart';
 import 'services/people_hive_service.dart';
+import 'services/contact_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +20,12 @@ void main() async {
   Hive.registerAdapter(TransactionAdapter());
   Hive.registerAdapter(UserSettingsAdapter());
   Hive.registerAdapter(PeopleTransactionAdapter());
+  Hive.registerAdapter(PersonContactAdapter());
   
   // Initialize Hive services
   await HiveService.init();
   await PeopleHiveService.init();
+  await ContactService.init();
   
   runApp(MoneyManagerApp());
 }

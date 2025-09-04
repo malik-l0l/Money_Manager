@@ -32,19 +32,19 @@ This document outlines all tasks, features, and fixes in the development of your
 - ✅ Removed "+" prefix in income cards
 - ✅ Improved card designs across Monthly Summary
 - ✅ Placed "owes you" on left and "you owe" on right in People Manager
+- ✅ Fix crash issue in People Manager screen when locking/unlocking phone
+- ✅ Fix People Manager crash issue after screen off/on (text scatter bug)
 
 
 ---
 
 ## ⬜ Pending Tasks (TODO)
 
-- ⬜ Fix crash issue in People Manager screen when locking/unlocking phone
-- ⬜ Implement chart for financial visualization
+- ⬜ Implement chart for financial visualization in balance card
 - ⬜ Onboarding: Progressive cards showing app value propositions
 - ⬜ Add balance update animations with positive/negative feedback
-- ⬜ Create long-press "+" shortcut for transaction categories (Food, Travel, etc.)
-- ⬜ Fix People Manager crash issue after screen off/on (text scatter bug)
 - ⬜ Add widget support for quick insights
+- ⬜ share SMS feature
 
 ---
 

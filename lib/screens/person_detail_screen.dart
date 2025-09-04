@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import '../services/people_hive_service.dart';
+import '../services/contact_service.dart';
 import '../models/people_transaction.dart';
+import '../models/person_summary.dart';
 import '../widgets/people_transaction_card.dart';
 import '../widgets/add_people_transaction_modal.dart';
+import '../widgets/share_modal.dart';
 import '../widgets/custom_snackbar.dart';
 
 class PersonDetailScreen extends StatefulWidget {
@@ -18,6 +21,7 @@ class PersonDetailScreen extends StatefulWidget {
 class _PersonDetailScreenState extends State<PersonDetailScreen> {
   List<PeopleTransaction> _transactions = [];
   double _balance = 0.0;
+  late PersonSummary _personSummary;
 
   @override
   void initState() {
@@ -33,6 +37,16 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
         _transactions =
             PeopleHiveService.getTransactionsForPerson(widget.personName);
         _balance = PeopleHiveService.getBalanceForPerson(widget.personName);
+        
+        // Create person summary for sharing
+        _personSummary = PersonSummary(
+          name: widget.personName,
+          totalBalance: _balance,
+          transactionCount: _transactions.length,
+          lastTransactionDate: _transactions.isNotEmpty 
+              ? _transactions.first.timestamp 
+              : DateTime.now(),
+        );
       });
     } catch (e) {
       // Handle any potential errors gracefully
@@ -49,7 +63,35 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.personName),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                widget.personName,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            if (_transactions.isNotEmpty)
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: IconButton(
+                  onPressed: _showShareModal,
+                  icon: Icon(
+                    Icons.share,
+                    color: Theme.of(context).primaryColor,
+                    size: 22,
+                  ),
+                  tooltip: 'Share transaction summary',
+                ),
+              ),
+          ],
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -274,6 +316,20 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
             child: Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showShareModal() {
+    // Get the last 5 transactions for sharing
+    final recentTransactions = _transactions.take(5).toList();
+    
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => ShareModal(
+        person: _personSummary,
+        recentTransactions: recentTransactions,
       ),
     );
   }
