@@ -25,14 +25,15 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  late FocusNode _phoneFocus;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
-      duration: Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 300),
       vsync: this,
     );
 
@@ -52,8 +53,11 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
       curve: Curves.easeOut,
     ));
 
+    _phoneFocus = FocusNode();
+
     // Load existing phone number if available
-    final existingPhone = ContactService.getPersonPhoneNumber(widget.person.name);
+    final existingPhone =
+        ContactService.getPersonPhoneNumber(widget.person.name);
     _phoneController = TextEditingController(text: existingPhone ?? '');
 
     _animationController.forward();
@@ -63,6 +67,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
   void dispose() {
     _animationController.dispose();
     _phoneController.dispose();
+    _phoneFocus.dispose();
     super.dispose();
   }
 
@@ -71,62 +76,66 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        return Stack(
-          children: [
-            // Background overlay
-            FadeTransition(
-              opacity: _fadeAnimation,
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
+        return Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              // Background overlay
+              FadeTransition(
+                opacity: _fadeAnimation,
                 child: GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: Container(),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                  ),
                 ),
               ),
-            ),
-            // Modal content
-            Transform.translate(
-              offset: Offset(0, _slideAnimation.value * MediaQuery.of(context).size.height),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 20,
-                        offset: Offset(0, -5),
-                      ),
-                    ],
-                  ),
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeader(),
-                          SizedBox(height: 24),
-                          _buildPhoneNumberField(),
-                          SizedBox(height: 24),
-                          _buildPreview(),
-                          SizedBox(height: 32),
-                          _buildShareOptions(),
-                          SizedBox(height: 16),
-                        ],
+              // Modal content
+              Transform.translate(
+                offset: Offset(0,
+                    _slideAnimation.value * MediaQuery.of(context).size.height),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      borderRadius:
+                          BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: Offset(0, -5),
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(),
+                            SizedBox(height: 24),
+                            _buildPhoneNumberField(),
+                            SizedBox(height: 24),
+                            _buildPreview(),
+                            SizedBox(height: 32),
+                            _buildShareOptions(),
+                            SizedBox(height: 16),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -170,6 +179,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.titleLarge?.color,
                     ),
                   ),
                   Text(
@@ -197,6 +207,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Theme.of(context).textTheme.titleMedium?.color,
           ),
         ),
         SizedBox(height: 8),
@@ -214,14 +225,39 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
           ),
           child: TextField(
             controller: _phoneController,
+            focusNode: _phoneFocus,
             keyboardType: TextInputType.phone,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
             decoration: InputDecoration(
-              hintText: 'Enter phone number',
-              prefixIcon: Icon(Icons.phone_outlined),
+              hintText: 'Enter 10-digit phone number',
+              hintStyle: TextStyle(
+                color: Colors.grey[500],
+                fontSize: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.phone_outlined,
+                color: Theme.of(context).primaryColor,
+              ),
               prefixText: '+91 ',
+              prefixStyle: TextStyle(
+                color: Theme.of(context).primaryColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: Theme.of(context).primaryColor,
+                  width: 2,
+                ),
               ),
               filled: true,
               fillColor: Colors.transparent,
@@ -252,8 +288,9 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
   }
 
   Widget _buildPreview() {
-    final shareText = ShareService.generateShareText(widget.person, widget.recentTransactions);
-    
+    final shareText = ShareService.generateShareText(
+        widget.person, widget.recentTransactions);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -270,6 +307,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.titleMedium?.color,
               ),
             ),
           ],
@@ -279,11 +317,18 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
           width: double.infinity,
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[50],
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Colors.grey.withOpacity(0.3),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: Offset(0, 5),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +338,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
                 style: TextStyle(
                   fontSize: 14,
                   height: 1.4,
-                  color: Colors.grey[800],
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
                 ),
               ),
             ],
@@ -312,6 +357,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
+            color: Theme.of(context).textTheme.titleMedium?.color,
           ),
         ),
         SizedBox(height: 16),
@@ -349,7 +395,8 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildShareButton(String label, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildShareButton(
+      String label, IconData icon, Color color, VoidCallback onTap) {
     return GestureDetector(
       onTap: _isLoading ? null : onTap,
       child: Container(
@@ -360,6 +407,13 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
           border: Border.all(
             color: color.withOpacity(0.3),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -397,17 +451,23 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
 
     try {
       final phoneNumber = '+91${_phoneController.text.trim()}';
-      final message = ShareService.generateShareText(widget.person, widget.recentTransactions);
-      
-      await ContactService.savePersonContact(widget.person.name, _phoneController.text.trim());
+      final message = ShareService.generateShareText(
+          widget.person, widget.recentTransactions);
+
+      await ContactService.savePersonContact(
+          widget.person.name, _phoneController.text.trim());
       await ShareService.shareViaWhatsApp(phoneNumber, message);
-      
+
       Navigator.pop(context);
-      CustomSnackBar.show(context, 'Shared via WhatsApp successfully!', SnackBarType.success);
+      CustomSnackBar.show(
+          context, 'Shared via WhatsApp successfully!', SnackBarType.success);
     } catch (e) {
-      CustomSnackBar.show(context, 'Failed to share via WhatsApp: ${e.toString()}', SnackBarType.error);
+      CustomSnackBar.show(context,
+          'Failed to share via WhatsApp: ${e.toString()}', SnackBarType.error);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -419,22 +479,29 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
     try {
       final hasPermission = await ShareService.requestSmsPermission();
       if (!hasPermission) {
-        CustomSnackBar.show(context, 'SMS permission denied', SnackBarType.error);
+        CustomSnackBar.show(
+            context, 'SMS permission denied', SnackBarType.error);
         return;
       }
 
       final phoneNumber = '+91${_phoneController.text.trim()}';
-      final message = ShareService.generateShareText(widget.person, widget.recentTransactions);
-      
-      await ContactService.savePersonContact(widget.person.name, _phoneController.text.trim());
+      final message = ShareService.generateShareText(
+          widget.person, widget.recentTransactions);
+
+      await ContactService.savePersonContact(
+          widget.person.name, _phoneController.text.trim());
       await ShareService.shareViaSMS(phoneNumber, message);
-      
+
       Navigator.pop(context);
-      CustomSnackBar.show(context, 'SMS app opened successfully!', SnackBarType.success);
+      CustomSnackBar.show(
+          context, 'SMS app opened successfully!', SnackBarType.success);
     } catch (e) {
-      CustomSnackBar.show(context, 'Failed to open SMS: ${e.toString()}', SnackBarType.error);
+      CustomSnackBar.show(
+          context, 'Failed to open SMS: ${e.toString()}', SnackBarType.error);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -442,31 +509,39 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
     setState(() => _isLoading = true);
 
     try {
-      final message = ShareService.generateShareText(widget.person, widget.recentTransactions);
-      
+      final message = ShareService.generateShareText(
+          widget.person, widget.recentTransactions);
+
       if (_phoneController.text.trim().isNotEmpty) {
-        await ContactService.savePersonContact(widget.person.name, _phoneController.text.trim());
+        await ContactService.savePersonContact(
+            widget.person.name, _phoneController.text.trim());
       }
-      
+
       await ShareService.shareAsText(message);
-      
+
       Navigator.pop(context);
-      CustomSnackBar.show(context, 'Share options opened!', SnackBarType.success);
+      CustomSnackBar.show(
+          context, 'Share options opened!', SnackBarType.success);
     } catch (e) {
-      CustomSnackBar.show(context, 'Failed to share: ${e.toString()}', SnackBarType.error);
+      CustomSnackBar.show(
+          context, 'Failed to share: ${e.toString()}', SnackBarType.error);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   bool _validatePhoneNumber() {
     final phone = _phoneController.text.trim();
     if (phone.isEmpty) {
-      CustomSnackBar.show(context, 'Please enter a phone number', SnackBarType.warning);
+      CustomSnackBar.show(
+          context, 'Please enter a phone number', SnackBarType.warning);
       return false;
     }
     if (phone.length != 10) {
-      CustomSnackBar.show(context, 'Please enter a valid 10-digit phone number', SnackBarType.warning);
+      CustomSnackBar.show(context, 'Please enter a valid 10-digit phone number',
+          SnackBarType.warning);
       return false;
     }
     return true;
