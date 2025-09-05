@@ -12,7 +12,7 @@ class ShareService {
     return status.isGranted;
   }
 
-  static String generateShareText(PersonSummary person, List<PeopleTransaction> recentTransactions) {
+  static String generateShareText(PersonSummary person, List<PeopleTransaction> transactions) {
     final StringBuffer buffer = StringBuffer();
     
     // Header with balance summary
@@ -26,27 +26,35 @@ class ShareService {
     
     buffer.writeln();
     
-    if (recentTransactions.isNotEmpty) {
-      buffer.writeln('📋 Last ${recentTransactions.length} transactions:');
+    if (transactions.isNotEmpty) {
+      buffer.writeln('📋 Last ${transactions.length} transactions:');
       buffer.writeln();
       
-      for (int i = 0; i < recentTransactions.length; i++) {
-        final transaction = recentTransactions[i];
-        final emoji = _getTransactionEmoji(transaction.transactionType);
-        final actionText = _getActionText(transaction.transactionType);
-        final dateText = DateFormatter.formatDate(transaction.date);
-        
-        buffer.writeln('${i + 1}. $emoji $actionText ₹${transaction.amount.toStringAsFixed(0)} for ${transaction.reason} [$dateText]');
+      // Calculate running balance from oldest to newest
+      double runningBalance = 0;
+      final reversedTransactions = transactions.reversed.toList();
+      
+      for (final transaction in reversedTransactions) {
+        runningBalance += transaction.balanceImpact;
       }
       
-      buffer.writeln();
-      buffer.writeln('💡 Balance calculation:');
+      // Display transactions from newest to oldest with clean format
+      for (final transaction in transactions) {
+        final emoji = transaction.balanceImpact > 0 ? '➕' : '➖';
+        final actionText = _getCleanActionText(transaction);
+        final dateText = DateFormatter.formatDate(transaction.date);
+        
+        buffer.writeln('$emoji ₹${transaction.amount.toStringAsFixed(0).padLeft(3)}  ($actionText)${' ' * (35 - actionText.length)}[$dateText]');
+      }
       
-      double runningBalance = 0;
-      for (final transaction in recentTransactions.reversed) {
-        runningBalance += transaction.balanceImpact;
-        final sign = transaction.balanceImpact > 0 ? '+' : '';
-        buffer.writeln('   ${sign}₹${transaction.balanceImpact.toStringAsFixed(0)} = ₹${runningBalance.toStringAsFixed(0)}');
+      buffer.writeln('——————————————');
+      
+      if (person.totalBalance > 0) {
+        buffer.writeln('💰 Total: ₹${person.totalBalance.abs().toStringAsFixed(2)} → You owe me');
+      } else if (person.totalBalance < 0) {
+        buffer.writeln('💰 Total: ₹${person.totalBalance.abs().toStringAsFixed(2)} → I owe you');
+      } else {
+        buffer.writeln('💰 Total: ₹0.00 → All settled!');
       }
     } else {
       buffer.writeln('📋 No recent transactions');
@@ -58,33 +66,20 @@ class ShareService {
     return buffer.toString();
   }
 
-  static String _getTransactionEmoji(String transactionType) {
-    switch (transactionType) {
+  static String _getCleanActionText(PeopleTransaction transaction) {
+    switch (transaction.transactionType) {
       case 'give':
-        return '💸';
+        return 'I gave you for ${transaction.reason}';
       case 'take':
-        return '💰';
+        return 'I took cash from you for ${transaction.reason}';
       case 'owe':
-        return '🧾';
+        return 'You paid for me for ${transaction.reason}';
       case 'claim':
-        return '🏦';
+        return 'You hold my money for ${transaction.reason}';
       default:
-        return '💳';
-    }
-  }
-
-  static String _getActionText(String transactionType) {
-    switch (transactionType) {
-      case 'give':
-        return 'I gave you';
-      case 'take':
-        return 'I took from you';
-      case 'owe':
-        return 'You paid for me';
-      case 'claim':
-        return 'You have my money';
-      default:
-        return 'Transaction';
+        return transaction.isGiven 
+            ? 'I gave you for ${transaction.reason}'
+            : 'I took cash from you for ${transaction.reason}';
     }
   }
 

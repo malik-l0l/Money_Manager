@@ -321,15 +321,12 @@ class _PersonDetailScreenState extends State<PersonDetailScreen> {
   }
 
   void _showShareModal() {
-    // Get the last 5 transactions for sharing
-    final recentTransactions = _transactions.take(5).toList();
-    
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => ShareModal(
         person: _personSummary,
-        recentTransactions: recentTransactions,
+        allTransactions: _transactions,
       ),
     );
   }
