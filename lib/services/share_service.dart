@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/people_transaction.dart';
 import '../models/person_summary.dart';
 import '../utils/date_formatter.dart';
 
 class ShareService {
-  static Future<bool> requestSmsPermission() async {
-    final status = await Permission.sms.request();
-    return status.isGranted;
+  static String generateShareText(PersonSummary person, List<PeopleTransaction> transactions) {
+    return generateShareTextWithPreviousBalance(person, transactions, 0.0, false);
   }
 
-  static String generateShareText(PersonSummary person, List<PeopleTransaction> transactions) {
+  static String generateShareTextWithPreviousBalance(
+    PersonSummary person, 
+    List<PeopleTransaction> transactions, 
+    double previousBalance,
+    bool hasPreviousTransactions,
+  ) {
     final StringBuffer buffer = StringBuffer();
     
     // Header with balance summary
@@ -30,12 +33,14 @@ class ShareService {
       buffer.writeln('📋 Last ${transactions.length} transactions:');
       buffer.writeln();
       
-      // Calculate running balance from oldest to newest
-      double runningBalance = 0;
-      final reversedTransactions = transactions.reversed.toList();
-      
-      for (final transaction in reversedTransactions) {
-        runningBalance += transaction.balanceImpact;
+      // Add previous transactions balance if there are older transactions
+      if (hasPreviousTransactions && previousBalance != 0) {
+        final emoji = previousBalance > 0 ? '➕' : '➖';
+        final actionText = previousBalance > 0 
+            ? 'from previous transactions (you owe me)'
+            : 'from previous transactions (I owe you)';
+        
+        buffer.writeln('$emoji ₹${previousBalance.abs().toStringAsFixed(0).padLeft(3)}  ($actionText)');
       }
       
       // Display transactions from newest to oldest with clean format
@@ -93,16 +98,6 @@ class ShareService {
       await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
     } else {
       throw Exception('WhatsApp is not installed');
-    }
-  }
-
-  static Future<void> shareViaSMS(String phoneNumber, String message) async {
-    final smsUrl = 'sms:$phoneNumber?body=${Uri.encodeComponent(message)}';
-    
-    if (await canLaunchUrl(Uri.parse(smsUrl))) {
-      await launchUrl(Uri.parse(smsUrl));
-    } else {
-      throw Exception('SMS is not available');
     }
   }
 

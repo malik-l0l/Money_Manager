@@ -30,7 +30,6 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
   
   // Transaction selection variables
   int _selectedTransactionCount = 5;
-  bool _shareAllTransactions = false;
   late int _maxTransactions;
 
   @override
@@ -80,10 +79,21 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
   }
 
   List<PeopleTransaction> get _selectedTransactions {
-    if (_shareAllTransactions) {
-      return widget.allTransactions;
-    }
     return widget.allTransactions.take(_selectedTransactionCount).toList();
+  }
+
+  List<PeopleTransaction> get _previousTransactions {
+    if (_selectedTransactionCount >= widget.allTransactions.length) {
+      return [];
+    }
+    return widget.allTransactions.skip(_selectedTransactionCount).toList();
+  }
+
+  double get _previousTransactionsBalance {
+    return _previousTransactions.fold<double>(
+      0.0, 
+      (sum, transaction) => sum + transaction.balanceImpact,
+    );
   }
 
   @override
@@ -171,7 +181,7 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
               ),
             ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 16), // Reduced from 20 to 16
           Row(
             children: [
               Container(
@@ -319,206 +329,92 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
         ),
         SizedBox(height: 16),
         
-        // All transactions toggle
+        // Custom transaction count selector
         Container(
           padding: EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: _shareAllTransactions 
-                  ? Theme.of(context).primaryColor.withOpacity(0.3)
-                  : Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withOpacity(0.3),
             ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.select_all,
-                color: _shareAllTransactions 
-                    ? Theme.of(context).primaryColor 
-                    : Colors.grey[600],
-                size: 20,
+              Row(
+                children: [
+                  Icon(
+                    Icons.format_list_numbered,
+                    color: Theme.of(context).primaryColor,
+                    size: 20,
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Number of Transactions',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Spacer(),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '$_selectedTransactionCount',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Share All Transactions',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _shareAllTransactions 
-                            ? Theme.of(context).primaryColor 
-                            : Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                    Text(
-                      'Include all ${_maxTransactions} transactions',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+              SizedBox(height: 16),
+              
+              // Slider for transaction count
+              if (_maxTransactions > 1)
+                SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    activeTrackColor: Theme.of(context).primaryColor,
+                    inactiveTrackColor: Theme.of(context).primaryColor.withOpacity(0.3),
+                    thumbColor: Theme.of(context).primaryColor,
+                    overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                    valueIndicatorColor: Theme.of(context).primaryColor,
+                    trackHeight: 4,
+                  ),
+                  child: Slider(
+                    value: _selectedTransactionCount.toDouble(),
+                    min: 1,
+                    max: _maxTransactions.toDouble(),
+                    divisions: _maxTransactions > 1 ? _maxTransactions - 1 : null,
+                    label: '$_selectedTransactionCount transactions',
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedTransactionCount = value.round();
+                      });
+                    },
+                  ),
                 ),
-              ),
-              Switch(
-                value: _shareAllTransactions,
-                onChanged: (value) {
-                  setState(() {
-                    _shareAllTransactions = value;
-                  });
-                },
-                activeColor: Theme.of(context).primaryColor,
-              ),
             ],
           ),
         ),
-        
-        if (!_shareAllTransactions) ...[
-          SizedBox(height: 16),
-          
-          // Custom transaction count selector
-          Container(
-            padding: EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.grey.withOpacity(0.3),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.format_list_numbered,
-                      color: Theme.of(context).primaryColor,
-                      size: 20,
-                    ),
-                    SizedBox(width: 12),
-                    Text(
-                      'Number of Transactions',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Spacer(),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$_selectedTransactionCount',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                
-                // Slider for transaction count
-                if (_maxTransactions > 1)
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Theme.of(context).primaryColor,
-                      inactiveTrackColor: Theme.of(context).primaryColor.withOpacity(0.3),
-                      thumbColor: Theme.of(context).primaryColor,
-                      overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                      valueIndicatorColor: Theme.of(context).primaryColor,
-                      trackHeight: 4,
-                    ),
-                    child: Slider(
-                      value: _selectedTransactionCount.toDouble(),
-                      min: 1,
-                      max: _maxTransactions.toDouble(),
-                      divisions: _maxTransactions > 1 ? _maxTransactions - 1 : null,
-                      label: '$_selectedTransactionCount transactions',
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedTransactionCount = value.round();
-                        });
-                      },
-                    ),
-                  ),
-                
-                // Quick selection buttons
-                SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  children: [
-                    if (_maxTransactions >= 3)
-                      _buildQuickSelectButton(3),
-                    if (_maxTransactions >= 5)
-                      _buildQuickSelectButton(5),
-                    if (_maxTransactions >= 10)
-                      _buildQuickSelectButton(10),
-                    if (_maxTransactions > 10)
-                      _buildQuickSelectButton(_maxTransactions, label: 'All'),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }
 
-  Widget _buildQuickSelectButton(int count, {String? label}) {
-    final isSelected = !_shareAllTransactions && _selectedTransactionCount == count;
-    final displayLabel = label ?? '$count';
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          if (label == 'All') {
-            _shareAllTransactions = true;
-          } else {
-            _shareAllTransactions = false;
-            _selectedTransactionCount = count;
-          }
-        });
-      },
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected || (label == 'All' && _shareAllTransactions)
-              ? Theme.of(context).primaryColor
-              : Theme.of(context).primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
-          ),
-        ),
-        child: Text(
-          displayLabel,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected || (label == 'All' && _shareAllTransactions)
-                ? Colors.white
-                : Theme.of(context).primaryColor,
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildPreview() {
-    final shareText = ShareService.generateShareText(widget.person, _selectedTransactions);
+    final shareText = ShareService.generateShareTextWithPreviousBalance(
+      widget.person, 
+      _selectedTransactions, 
+      _previousTransactionsBalance,
+      _previousTransactions.isNotEmpty,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,58 +495,52 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
         ),
         SizedBox(height: 16),
         
-        // WhatsApp - Primary CTA (Full width)
-        Container(
-          width: double.infinity,
-          margin: EdgeInsets.only(bottom: 12),
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _shareViaWhatsApp,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF25D366), // WhatsApp green
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              elevation: 2,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.chat, size: 20),
-                SizedBox(width: 12),
-                Text(
-                  'Send via WhatsApp',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(width: 8),
-                Icon(Icons.arrow_forward, size: 16),
-              ],
-            ),
-          ),
-        ),
-        
-        // Secondary options
+        // Share options in a row: More Options (30%) + WhatsApp (70%)
         Row(
           children: [
+            // More Options - 30% width
             Expanded(
-              child: _buildSecondaryShareButton(
-                'SMS',
-                Icons.sms,
-                Colors.blue,
-                () => _shareViaSMS(),
-              ),
-            ),
-            SizedBox(width: 12),
-            Expanded(
+              flex: 3,
               child: _buildSecondaryShareButton(
                 'More Options',
                 Icons.share,
                 Colors.purple,
                 () => _shareAsText(),
+              ),
+            ),
+            SizedBox(width: 12),
+            // WhatsApp - 70% width
+            Expanded(
+              flex: 7,
+              child: Container(
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _shareViaWhatsApp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF25D366), // WhatsApp green
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.chat, size: 20),
+                      SizedBox(width: 12),
+                      Text(
+                        'Send via WhatsApp',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward, size: 16),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
@@ -716,7 +606,12 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
 
     try {
       final phoneNumber = '+91${_phoneController.text.trim()}';
-      final message = ShareService.generateShareText(widget.person, _selectedTransactions);
+      final message = ShareService.generateShareTextWithPreviousBalance(
+        widget.person, 
+        _selectedTransactions, 
+        _previousTransactionsBalance,
+        _previousTransactions.isNotEmpty,
+      );
 
       await ContactService.savePersonContact(widget.person.name, _phoneController.text.trim());
       await ShareService.shareViaWhatsApp(phoneNumber, message);
@@ -732,40 +627,16 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _shareViaSMS() async {
-    if (!_validatePhoneNumber()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      final hasPermission = await ShareService.requestSmsPermission();
-      if (!hasPermission) {
-        CustomSnackBar.show(context, 'SMS permission denied', SnackBarType.error);
-        return;
-      }
-
-      final phoneNumber = '+91${_phoneController.text.trim()}';
-      final message = ShareService.generateShareText(widget.person, _selectedTransactions);
-
-      await ContactService.savePersonContact(widget.person.name, _phoneController.text.trim());
-      await ShareService.shareViaSMS(phoneNumber, message);
-
-      Navigator.pop(context);
-      CustomSnackBar.show(context, 'SMS app opened successfully!', SnackBarType.success);
-    } catch (e) {
-      CustomSnackBar.show(context, 'Failed to open SMS: ${e.toString()}', SnackBarType.error);
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
   Future<void> _shareAsText() async {
     setState(() => _isLoading = true);
 
     try {
-      final message = ShareService.generateShareText(widget.person, _selectedTransactions);
+      final message = ShareService.generateShareTextWithPreviousBalance(
+        widget.person, 
+        _selectedTransactions, 
+        _previousTransactionsBalance,
+        _previousTransactions.isNotEmpty,
+      );
 
       if (_phoneController.text.trim().isNotEmpty) {
         await ContactService.savePersonContact(widget.person.name, _phoneController.text.trim());
