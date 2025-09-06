@@ -244,42 +244,106 @@ class _AddTransactionModalState extends State<AddTransactionModal>
 
                     SizedBox(height: 24),
 
-                    // Amount Field
-                    Text(
-                      'Amount',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: _amountController,
-                      focusNode: _amountFocus,
-                      keyboardType:
-                          TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        hintText: '0.00',
-                        prefixText: settings.currency,
-                        prefixStyle: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: _isIncome ? Colors.green : Colors.red,
+                    // Amount and Date Row
+                    Row(
+                      children: [
+                        // Amount Field - 60% width
+                        Expanded(
+                          flex: 7,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Amount',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              TextField(
+                                controller: _amountController,
+                                focusNode: _amountFocus,
+                                keyboardType:
+                                    TextInputType.numberWithOptions(decimal: true),
+                                decoration: InputDecoration(
+                                  hintText: '0.00',
+                                  prefixText: settings.currency,
+                                  prefixStyle: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: _isIncome ? Colors.green : Colors.red,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: _isIncome ? Colors.green : Colors.red,
+                                ),
+                                textInputAction: TextInputAction.next,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.allow(
+                                      RegExp(r'^\d+\.?\d{0,2}')),
+                                ],
+                                onSubmitted: (_) {
+                                  FocusScope.of(context).requestFocus(_reasonFocus);
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _isIncome ? Colors.green : Colors.red,
-                      ),
-                      textInputAction: TextInputAction.next,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d+\.?\d{0,2}')),
+                        SizedBox(width: 16),
+                        // Date Field - 40% width
+                        Expanded(
+                          flex: 3,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Date',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              GestureDetector(
+                                onTap: _selectDate,
+                                child: Container(
+                                  padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: Colors.grey.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.calendar_today,
+                                        color: Theme.of(context).primaryColor,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                      '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
-                      onSubmitted: (_) {
-                        FocusScope.of(context).requestFocus(_reasonFocus);
-                      },
                     ),
 
                     SizedBox(height: 24),
@@ -306,48 +370,6 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                       onSubmitted: (_) {
                         _saveTransaction();
                       },
-                    ),
-
-                    SizedBox(height: 16),
-
-                    // Date Selector
-                    Text(
-                      'Date',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: Container(
-                        padding: EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Colors.grey.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today,
-                                color: Theme.of(context).primaryColor),
-                            SizedBox(width: 12),
-                            Text(
-                              '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Spacer(),
-                            Icon(Icons.arrow_forward_ios,
-                                size: 16, color: Colors.grey),
-                          ],
-                        ),
-                      ),
                     ),
 
                     SizedBox(height: 32),

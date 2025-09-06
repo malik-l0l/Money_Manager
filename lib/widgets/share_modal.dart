@@ -495,40 +495,91 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
         ),
         SizedBox(height: 16),
         
-        // Share options in a row: More Options (30%) + WhatsApp (70%)
+        // Share options in a row with consistent theming
         Row(
           children: [
-            // More Options - 30% width
+            // More Options - 30% width with consistent button style
             Expanded(
               flex: 3,
-              child: _buildSecondaryShareButton(
-                'More Options',
-                Icons.share,
-                Colors.purple,
-                () => _shareAsText(),
-              ),
-            ),
-            SizedBox(width: 12),
-            // WhatsApp - 70% width
-            Expanded(
-              flex: 7,
               child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.purple.withOpacity(0.2),
+                      blurRadius: 8,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _shareViaWhatsApp,
+                  onPressed: _isLoading ? null : _shareAsText,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF25D366), // WhatsApp green
+                    backgroundColor: Colors.purple,
                     foregroundColor: Colors.white,
                     padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    elevation: 2,
+                    elevation: 0,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.share, size: 18),
+                      SizedBox(height: 4),
+                      Text(
+                        'More',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          height: 1.2,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            // WhatsApp - 70% width with enhanced styling
+            Expanded(
+              flex: 7,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0xFF25D366).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _shareViaWhatsApp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF25D366), // WhatsApp green
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.chat, size: 20),
-                      SizedBox(width: 12),
+                      Container(
+                        padding: EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.chat, size: 16, color: Colors.white),
+                      ),
+                      SizedBox(width: 10),
                       Text(
                         'Send via WhatsApp',
                         style: TextStyle(
@@ -536,8 +587,6 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 16),
                     ],
                   ),
                 ),
@@ -546,56 +595,6 @@ class _ShareModalState extends State<ShareModal> with TickerProviderStateMixin {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildSecondaryShareButton(
-      String label, IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: _isLoading ? null : onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: color.withOpacity(0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 18,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
     );
   }
 
