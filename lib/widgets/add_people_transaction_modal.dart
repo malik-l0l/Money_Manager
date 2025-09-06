@@ -184,6 +184,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
     _filteredNames = _allPeopleNames
         .where((name) => name.toLowerCase().contains(query))
+        .take(5) // Limit to 5 suggestions for horizontal scroll
         .toList();
 
     setState(() {
@@ -196,7 +197,31 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     setState(() {
       _showSuggestions = false;
     });
-    FocusScope.of(context).requestFocus(_reasonFocus);
+    // Don't auto focus anywhere, let user decide next action
+  }
+
+  FocusNode _getNextFocusNode() {
+    final hasPersonName = _personNameController.text.trim().isNotEmpty;
+
+    if (hasPersonName) {
+      // If person name exists: amount -> reason -> save
+      return _reasonFocus;
+    } else {
+      // If no person name: amount -> reason -> person -> save
+      return _personNameFocus;
+    }
+  }
+
+  void _handleReasonSubmitted() {
+    final hasPersonName = _personNameController.text.trim().isNotEmpty;
+
+    if (hasPersonName) {
+      // If person name exists, save directly
+      _saveTransaction();
+    } else {
+      // If no person name, focus on person name
+      FocusScope.of(context).requestFocus(_personNameFocus);
+    }
   }
 
   @override
@@ -249,6 +274,11 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
                     SizedBox(height: 24),
 
+                    // Combined Info Container (replacing both previous info containers)
+                    _buildCombinedInfoCard(),
+
+                    SizedBox(height: 24),
+
                     // Amount and Date Row
                     Row(
                       children: [
@@ -294,7 +324,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                                 ],
                                 onSubmitted: (_) {
                                   FocusScope.of(context)
-                                      .requestFocus(_personNameFocus);
+                                      .requestFocus(_reasonFocus);
                                 },
                               ),
                             ],
@@ -357,7 +387,34 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
                     SizedBox(height: 24),
 
-                    // Person Name Field with Autocomplete
+                    // Reason Field - Now placed before person name
+                    Text(
+                      'Reason',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: _reasonController,
+                      focusNode: _reasonFocus,
+                      decoration: InputDecoration(
+                        hintText:
+                            _transactionTypes[_transactionType]!['example'],
+                        prefixIcon: Icon(Icons.description_outlined),
+                      ),
+                      textCapitalization: TextCapitalization.sentences,
+                      textInputAction: TextInputAction.next,
+                      maxLength: 100,
+                      onSubmitted: (_) {
+                        _handleReasonSubmitted();
+                      },
+                    ),
+
+                    SizedBox(height: 24),
+
+                    // Person Name Field with Horizontal Autocomplete
                     Text(
                       'Person Name',
                       style: TextStyle(
@@ -387,39 +444,68 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                                 : null,
                           ),
                           textCapitalization: TextCapitalization.words,
-                          textInputAction: TextInputAction.next,
+                          textInputAction: TextInputAction.done,
                           onSubmitted: (_) {
-                            FocusScope.of(context).requestFocus(_reasonFocus);
+                            _saveTransaction();
                           },
                         ),
                         if (_showSuggestions) ...[
-                          SizedBox(height: 8),
+                          SizedBox(height: 12),
                           Container(
-                            constraints: BoxConstraints(maxHeight: 150),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.withOpacity(0.3),
-                              ),
-                            ),
+                            height: 50,
                             child: ListView.builder(
-                              shrinkWrap: true,
+                              scrollDirection: Axis.horizontal,
                               itemCount: _filteredNames.length,
                               itemBuilder: (context, index) {
                                 final name = _filteredNames[index];
-                                return ListTile(
-                                  dense: true,
-                                  leading: Icon(
-                                    Icons.person,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 20,
+                                final isLast =
+                                    index == _filteredNames.length - 1;
+
+                                return Container(
+                                  margin: EdgeInsets.only(
+                                    right: isLast ? 0 : 8,
                                   ),
-                                  title: Text(
-                                    name,
-                                    style: TextStyle(fontSize: 14),
+                                  child: GestureDetector(
+                                    onTap: () => _selectSuggestion(name),
+                                    child: Container(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .primaryColor
+                                            .withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(25),
+                                        border: Border.all(
+                                          color: Theme.of(context)
+                                              .primaryColor
+                                              .withOpacity(0.3),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            size: 16,
+                                          ),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            name,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .primaryColor,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
-                                  onTap: () => _selectSuggestion(name),
                                 );
                               },
                             ),
@@ -428,39 +514,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                       ],
                     ),
 
-                    SizedBox(height: 24),
-
-                    // Reason Field
-                    Text(
-                      'Reason',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    TextField(
-                      controller: _reasonController,
-                      focusNode: _reasonFocus,
-                      decoration: InputDecoration(
-                        hintText:
-                            _transactionTypes[_transactionType]!['example'],
-                        prefixIcon: Icon(Icons.description_outlined),
-                      ),
-                      textCapitalization: TextCapitalization.sentences,
-                      textInputAction: TextInputAction.done,
-                      maxLength: 100,
-                      onSubmitted: (_) {
-                        _saveTransaction();
-                      },
-                    ),
-
-                    SizedBox(height: 32),
-
-                    // Preview Text
-                    _buildPreviewCard(),
-
-                    SizedBox(height: 24),
+                    SizedBox(height: 28),
 
                     // Save Button
                     SizedBox(
@@ -526,51 +580,6 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
             }).toList(),
           ),
         ),
-        SizedBox(height: 12),
-        // Help text for selected type
-        Container(
-          padding: EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color:
-                _transactionTypes[_transactionType]!['color'].withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _transactionTypes[_transactionType]!['color']
-                  .withOpacity(0.3),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.info_outline,
-                    color: _transactionTypes[_transactionType]!['color'],
-                    size: 16,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    _transactionTypes[_transactionType]!['description'],
-                    style: TextStyle(
-                      color: _transactionTypes[_transactionType]!['color'],
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 4),
-              Text(
-                'Example: ${_transactionTypes[_transactionType]!['example']}',
-                style: TextStyle(
-                  color: _transactionTypes[_transactionType]!['color'],
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -614,13 +623,15 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
     );
   }
 
-  Widget _buildPreviewCard() {
+  Widget _buildCombinedInfoCard() {
     final typeData = _transactionTypes[_transactionType]!;
     final amount =
         _amountController.text.isNotEmpty ? _amountController.text : '0';
     final person = _personNameController.text.isNotEmpty
         ? _personNameController.text
         : 'Person';
+    final reason =
+        _reasonController.text.isNotEmpty ? _reasonController.text : 'reason';
 
     return Container(
       padding: EdgeInsets.all(16),
@@ -634,75 +645,115 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Main description
           Row(
             children: [
               Icon(
-                Icons.preview,
+                typeData['icon'],
                 color: typeData['color'],
                 size: 16,
               ),
               SizedBox(width: 8),
-              Text(
-                'Preview',
-                style: TextStyle(
-                  color: typeData['color'],
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+              Expanded(
+                child: Text(
+                  typeData['description'],
+                  style: TextStyle(
+                    color: typeData['color'],
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
           ),
+
           SizedBox(height: 8),
+
+          // Example
           Text(
-            _getPreviewText(amount, person),
+            'Example: ${typeData['example']}',
             style: TextStyle(
-              color: typeData['color'],
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
+              color: typeData['color'].withOpacity(0.8),
+              fontSize: 12,
             ),
           ),
+
+          SizedBox(height: 12),
+          Divider(color: typeData['color'].withOpacity(0.3), height: 1),
+          SizedBox(height: 12),
+
+          // People Balance Impact
+          Row(
+            children: [
+              Icon(
+                Icons.people,
+                color: typeData['color'],
+                size: 14,
+              ),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _getPeopleBalanceText(amount, person),
+                  style: TextStyle(
+                    color: typeData['color'],
+                    fontWeight: FontWeight.w500,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
           SizedBox(height: 8),
-          Text(
-            _getMainBalanceImpact(amount, person),
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 11,
-              fontStyle: FontStyle.italic,
-            ),
+
+          // Main Balance Impact
+          Row(
+            children: [
+              Icon(
+                Icons.account_balance_wallet,
+                color: Colors.grey[600],
+                size: 14,
+              ),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _getMainBalanceText(amount, person, reason),
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  String _getPreviewText(String amount, String person) {
+  String _getPeopleBalanceText(String amount, String person) {
     switch (_transactionType) {
       case 'give':
-        return 'People Balance: $person owes you ₹$amount';
-      case 'take':
-        return 'People Balance: You owe $person ₹$amount';
-      case 'owe':
-        return 'People Balance: You owe $person ₹$amount';
       case 'claim':
-        return 'People Balance: $person owes you ₹$amount';
+        return '$person owes you ₹$amount';
+      case 'take':
+      case 'owe':
+        return 'You owe $person ₹$amount';
       default:
         return '';
     }
   }
 
-  String _getMainBalanceImpact(String amount, String person) {
-    final reason =
-        _reasonController.text.isNotEmpty ? _reasonController.text : 'reason';
-
+  String _getMainBalanceText(String amount, String person, String reason) {
     switch (_transactionType) {
       case 'give':
-        return 'Main balance: -₹$amount | History: "Give money to "$person" for "$reason""';
+        return 'Main balance: -₹$amount | Give money to $person for $reason';
       case 'take':
-        return 'Main balance: +₹$amount | History: "Take money from "$person" for "$reason""';
+        return 'Main balance: +₹$amount | Take money from $person for $reason';
       case 'owe':
-        return 'Main balance: No change | History: "$person spent ₹$amount for you for $reason"';
+        return 'Main balance: No change | $person spent ₹$amount for you for $reason';
       case 'claim':
-        return 'Main balance: No change | History: "$person has ₹$amount of your money for $reason"';
+        return 'Main balance: No change | $person has ₹$amount of your money for $reason';
       default:
         return '';
     }
