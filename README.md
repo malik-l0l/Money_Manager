@@ -34,17 +34,22 @@ This document outlines all tasks, features, and fixes in the development of your
 - ✅ Placed "owes you" on left and "you owe" on right in People Manager
 - ✅ Fix crash issue in People Manager screen when locking/unlocking phone
 - ✅ Fix People Manager crash issue after screen off/on (text scatter bug)
+- ✅ implement share people transaction feature - user can share their transaction history between people via whatsapp.
+- ✅ implement app bar navigation
+- ✅ improve FABs
+- ✅ improve add_people_transaction_modal
+- 
 
 
 ---
 
 ## ⬜ Pending Tasks (TODO)
 
+- ⬜ edit feature coming soon problem 
 - ⬜ Implement chart for financial visualization in balance card
 - ⬜ Onboarding: Progressive cards showing app value propositions
 - ⬜ Add balance update animations with positive/negative feedback
 - ⬜ Add widget support for quick insights
-- ⬜ share SMS feature
 
 ---
 
