@@ -26,6 +26,11 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
     _loadData();
   }
 
+  // Public method to refresh data from parent
+  void refreshData() {
+    _loadData();
+  }
+
   void _loadData() {
     if (!mounted) return;
 
@@ -126,7 +131,7 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
   Widget _buildStatCard(
       String title, double amount, Color color, IconData icon) {
     final settings = HiveService.getUserSettings();
-    
+
     if (settings.cardTheme == 'theme1') {
       // Theme 1 - Balance card style
       return Container(

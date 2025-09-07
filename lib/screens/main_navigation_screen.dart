@@ -18,8 +18,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
   int _currentIndex = 0;
   late PageController _pageController;
   late AnimationController _fabAnimationController;
+  late AnimationController _fabMorphController;
   late Animation<double> _fabScaleAnimation;
   late Animation<double> _fabRotationAnimation;
+  late Animation<double> _morphAnimation;
+  late Animation<Offset> _positionAnimation;
   
   // Keys for accessing child screen methods
   final GlobalKey<HomeScreenState> _homeScreenKey = GlobalKey<HomeScreenState>();
@@ -29,9 +32,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
     super.initState();
     _pageController = PageController();
     
-    // FAB animation controller
+    // FAB animation controller for show/hide
     _fabAnimationController = AnimationController(
       duration: Duration(milliseconds: 300),
+      vsync: this,
+    );
+    
+    // FAB morph animation controller for shape and position changes
+    _fabMorphController = AnimationController(
+      duration: Duration(milliseconds: 400),
       vsync: this,
     );
     
@@ -51,6 +60,22 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
       curve: Curves.easeInOut,
     ));
     
+    _morphAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _fabMorphController,
+      curve: Curves.easeInOutCubic,
+    ));
+    
+    _positionAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _fabMorphController,
+      curve: Curves.easeInOutCubic,
+    ));
+    
     _fabAnimationController.forward();
   }
 
@@ -58,11 +83,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
   void dispose() {
     _pageController.dispose();
     _fabAnimationController.dispose();
+    _fabMorphController.dispose();
     super.dispose();
   }
 
   void _onTabTapped(int index) {
     if (index == _currentIndex) return;
+    
+    final previousIndex = _currentIndex;
     
     setState(() {
       _currentIndex = index;
@@ -77,12 +105,31 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
     // Haptic feedback for better UX
     HapticFeedback.lightImpact();
     
-    // Animate FAB based on current page
-    if (index == 0) { // Home screen
+    // Handle FAB animations based on tab changes
+    _handleFABTransition(previousIndex, index);
+  }
+
+  void _handleFABTransition(int fromIndex, int toIndex) {
+    // Show FABs on Home (0) and People (1) tabs, hide on Settings (2)
+    if ((fromIndex == 2 && (toIndex == 0 || toIndex == 1)) ||
+        (fromIndex == -1 && (toIndex == 0 || toIndex == 1))) {
+      // Show FABs
       _fabAnimationController.forward();
-    } else {
+    } else if ((fromIndex == 0 || fromIndex == 1) && toIndex == 2) {
+      // Hide FABs
       _fabAnimationController.reverse();
     }
+    
+    // Handle morphing animation between Home and People tabs
+    if ((fromIndex == 0 && toIndex == 1) || (fromIndex == 1 && toIndex == 0)) {
+      _triggerMorphAnimation();
+    }
+  }
+
+  void _triggerMorphAnimation() {
+    _fabMorphController.forward().then((_) {
+      _fabMorphController.reverse();
+    });
   }
 
   @override
@@ -91,16 +138,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
+          final previousIndex = _currentIndex;
           setState(() {
             _currentIndex = index;
           });
           
-          // Animate FAB based on current page
-          if (index == 0) {
-            _fabAnimationController.forward();
-          } else {
-            _fabAnimationController.reverse();
-          }
+          _handleFABTransition(previousIndex, index);
         },
         children: [
           HomeScreen(key: _homeScreenKey),
@@ -135,9 +178,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
             children: [
               _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
               _buildNavItem(1, Icons.people_outline, Icons.people, 'People'),
-              SizedBox(width: 60), // Space for FAB
+              SizedBox(width: 80), // Increased space for FAB area
               _buildNavItem(2, Icons.settings_outlined, Icons.settings, 'Settings'),
-              SizedBox(width: 20), // Balance the layout
+              SizedBox(width: 10), // Reduced to balance the layout with FABs shifted right
             ],
           ),
         ),
@@ -192,6 +235,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
   }
 
   Widget _buildAnimatedFAB() {
+    // Only show FABs on Home (0) and People (1) tabs
+    if (_currentIndex == 2) {
+      return SizedBox.shrink();
+    }
+
     return AnimatedBuilder(
       animation: _fabAnimationController,
       builder: (context, child) {
@@ -200,6 +248,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
           child: Transform.rotate(
             angle: _fabRotationAnimation.value * 0.1,
             child: Container(
+              // Shift FABs slightly to the right
+              margin: EdgeInsets.only(right: 20),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
@@ -210,63 +260,133 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> with Ticker
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // People Transaction FAB
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.purple.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: FloatingActionButton(
-                      onPressed: _showAddPeopleTransactionModal,
-                      heroTag: "people_fab",
-                      backgroundColor: Colors.purple,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      mini: true,
-                      child: Icon(Icons.person_add, size: 20),
-                    ),
-                  ),
-                  SizedBox(width: 12),
-                  // Main Transaction FAB
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Theme.of(context).primaryColor.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: GestureDetector(
-                      onTap: () => _showAddTransactionModal(false),
-                      onLongPress: () => _showAddTransactionModal(true),
-                      child: FloatingActionButton(
-                        onPressed: null,
-                        heroTag: "main_fab",
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        child: Icon(Icons.add, size: 28),
+              child: AnimatedBuilder(
+                animation: _morphAnimation,
+                builder: (context, child) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildMorphingFAB(
+                        isLeft: true,
+                        onPressed: _currentIndex == 0 
+                            ? _showAddPeopleTransactionModal 
+                            : () => _showAddTransactionModal(false),
+                        heroTag: "left_fab",
+                        backgroundColor: _currentIndex == 0 ? Colors.purple : Theme.of(context).primaryColor,
+                        icon: _currentIndex == 0 ? Icons.person_add : Icons.add,
+                        iconSize: _currentIndex == 0 ? 20 : 28,
+                        isMini: _currentIndex == 0,
                       ),
-                    ),
-                  ),
-                ],
+                      SizedBox(width: 12),
+                      _buildMorphingFAB(
+                        isLeft: false,
+                        onPressed: _currentIndex == 0 
+                            ? () => _showAddTransactionModal(false)
+                            : _showAddPeopleTransactionModal,
+                        heroTag: "right_fab",
+                        backgroundColor: _currentIndex == 0 ? Theme.of(context).primaryColor : Colors.purple,
+                        icon: _currentIndex == 0 ? Icons.add : Icons.person_add,
+                        iconSize: _currentIndex == 0 ? 28 : 20,
+                        isMini: _currentIndex == 1,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMorphingFAB({
+    required bool isLeft,
+    required VoidCallback onPressed,
+    required String heroTag,
+    required Color backgroundColor,
+    required IconData icon,
+    required double iconSize,
+    required bool isMini,
+  }) {
+    // Calculate morph values
+    final morphValue = _morphAnimation.value;
+    final isHomePage = _currentIndex == 0;
+    
+    // For smooth morphing, we need to interpolate between the two states
+    double fabSize;
+    BorderRadius borderRadius;
+    
+    if (isLeft) {
+      // Left FAB: mini circle on home, regular square on people
+      if (isHomePage) {
+        // Home: mini circle
+        fabSize = 40.0;
+        borderRadius = BorderRadius.circular(20);
+      } else {
+        // People: morphing from mini circle to regular square
+        fabSize = 40.0 + (16.0 * morphValue); // 40 -> 56
+        final radiusValue = 20.0 - (4.0 * morphValue); // 20 -> 16
+        borderRadius = BorderRadius.circular(radiusValue);
+      }
+    } else {
+      // Right FAB: regular square on home, mini circle on people
+      if (isHomePage) {
+        // Home: regular square
+        fabSize = 56.0;
+        borderRadius = BorderRadius.circular(16);
+      } else {
+        // People: morphing from regular square to mini circle
+        fabSize = 56.0 - (16.0 * morphValue); // 56 -> 40
+        final radiusValue = 16.0 + (4.0 * morphValue); // 16 -> 20
+        borderRadius = BorderRadius.circular(radiusValue);
+      }
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: backgroundColor.withOpacity(0.3),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
+        width: fabSize,
+        height: fabSize,
+        child: Material(
+          color: backgroundColor,
+          borderRadius: borderRadius,
+          child: InkWell(
+            borderRadius: borderRadius,
+            onTap: onPressed,
+            onLongPress: (heroTag == "right_fab" && _currentIndex == 0) 
+                ? () => _showAddTransactionModal(true) 
+                : null,
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: borderRadius,
+              ),
+              child: Center(
+                child: AnimatedRotation(
+                  duration: Duration(milliseconds: 400),
+                  turns: morphValue * 0.5, // Half rotation for smooth effect
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: iconSize,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 
