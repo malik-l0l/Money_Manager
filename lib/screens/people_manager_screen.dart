@@ -8,6 +8,8 @@ import '../widgets/custom_snackbar.dart';
 import 'person_detail_screen.dart';
 
 class PeopleManagerScreen extends StatefulWidget {
+  const PeopleManagerScreen({Key? key}) : super(key: key);
+
   @override
   _PeopleManagerScreenState createState() => _PeopleManagerScreenState();
 }
@@ -59,13 +61,17 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('People Manager'),
+        title: Text(
+          'People Manager',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        centerTitle: false,
       ),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -84,15 +90,11 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
                 SizedBox(height: 32),
                 _buildSettledPeopleList(),
               ],
+              // Add bottom padding for navigation bar
+              SizedBox(height: 100),
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddTransactionModal,
-        icon: Icon(Icons.person_add),
-        label: Text('Add Transaction'),
-        backgroundColor: Theme.of(context).primaryColor,
       ),
     );
   }
@@ -345,22 +347,6 @@ class _PeopleManagerScreenState extends State<PeopleManagerScreen> {
           },
         ),
       ],
-    );
-  }
-
-  void _showAddTransactionModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => AddPeopleTransactionModal(
-        onSave: (transaction) async {
-          await PeopleHiveService.addPeopleTransaction(transaction);
-          _loadData();
-          CustomSnackBar.show(context, 'People transaction added successfully!',
-              SnackBarType.success);
-        },
-      ),
     );
   }
 

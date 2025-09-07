@@ -3,6 +3,8 @@ import '../services/hive_service.dart';
 import '../models/user_settings.dart';
 
 class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({Key? key}) : super(key: key);
+
   @override
   _SettingsScreenState createState() => _SettingsScreenState();
 }
@@ -28,13 +30,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Settings'),
+        title: Text(
+          'Settings',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
+        centerTitle: false,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -58,6 +64,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             SizedBox(height: 32),
             
             _buildSaveButton(),
+            // Add bottom padding for navigation bar
+            SizedBox(height: 100),
           ],
         ),
       ),
@@ -517,7 +525,5 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Colors.green,
       ),
     );
-    
-    Navigator.pop(context);
   }
 }

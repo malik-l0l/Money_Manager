@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/hive_service.dart';
 import '../models/user_settings.dart';
-import 'home_screen.dart';
+import 'main_navigation_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -198,7 +198,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => HomeScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => MainNavigationScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

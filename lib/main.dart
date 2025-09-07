@@ -5,7 +5,7 @@ import 'models/user_settings.dart';
 import 'models/people_transaction.dart';
 import 'models/person_contact.dart';
 import 'screens/welcome_screen.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_navigation_screen.dart';
 import 'themes/app_theme.dart';
 import 'services/hive_service.dart';
 import 'services/people_hive_service.dart';
@@ -45,7 +45,7 @@ class MoneyManagerApp extends StatelessWidget {
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: _getThemeMode(settings.theme),
-          home: settings.name.isEmpty ? WelcomeScreen() : HomeScreen(),
+          home: settings.name.isEmpty ? WelcomeScreen() : MainNavigationScreen(),
           debugShowCheckedModeBanner: false,
         );
       },

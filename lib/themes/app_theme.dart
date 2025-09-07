@@ -46,9 +46,9 @@ class AppTheme {
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: primaryColor,
       foregroundColor: Colors.white,
-      elevation: 8,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -70,6 +70,13 @@ class AppTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: primaryColor,
+      unselectedItemColor: Colors.grey[600],
+      type: BottomNavigationBarType.fixed,
+      elevation: 0,
     ),
     fontFamily: 'SF Pro Display',
   );
@@ -115,9 +122,9 @@ class AppTheme {
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: primaryColor,
       foregroundColor: Colors.white,
-      elevation: 8,
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
@@ -139,6 +146,13 @@ class AppTheme {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: Colors.grey[850],
+      selectedItemColor: primaryColor,
+      unselectedItemColor: Colors.grey[400],
+      type: BottomNavigationBarType.fixed,
+      elevation: 0,
     ),
     fontFamily: 'SF Pro Display',
   );
