@@ -77,7 +77,7 @@ class _AddTransactionModalState extends State<AddTransactionModal>
       if (settings.autoFocusAmount && widget.transaction == null) {
         FocusScope.of(context).requestFocus(_amountFocus);
       }
-      
+
       // Show snackbar hint for long press income mode
       if (widget.forceIncome == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -249,7 +249,7 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                       children: [
                         // Amount Field - 60% width
                         Expanded(
-                          flex: 7,
+                          flex: 6,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -264,15 +264,16 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                               TextField(
                                 controller: _amountController,
                                 focusNode: _amountFocus,
-                                keyboardType:
-                                    TextInputType.numberWithOptions(decimal: true),
+                                keyboardType: TextInputType.numberWithOptions(
+                                    decimal: true),
                                 decoration: InputDecoration(
                                   hintText: '0.00',
                                   prefixText: settings.currency,
                                   prefixStyle: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: _isIncome ? Colors.green : Colors.red,
+                                    color:
+                                        _isIncome ? Colors.green : Colors.red,
                                   ),
                                 ),
                                 style: TextStyle(
@@ -286,7 +287,8 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                                       RegExp(r'^\d+\.?\d{0,2}')),
                                 ],
                                 onSubmitted: (_) {
-                                  FocusScope.of(context).requestFocus(_reasonFocus);
+                                  FocusScope.of(context)
+                                      .requestFocus(_reasonFocus);
                                 },
                               ),
                             ],
@@ -295,7 +297,7 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                         SizedBox(width: 16),
                         // Date Field - 40% width
                         Expanded(
-                          flex: 3,
+                          flex: 4,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -329,7 +331,8 @@ class _AddTransactionModalState extends State<AddTransactionModal>
                                       SizedBox(width: 8),
                                       Expanded(
                                         child: Text(
-                                      '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',                                          style: TextStyle(
+                                          '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                           ),

@@ -33,7 +33,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
       // Early morning (5-8 AM)
       'early_morning': [
         'Rise and shine',
-        'Morning, sunshine',
         'Fresh start',
         'New day, new light'
       ],
@@ -43,7 +42,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
         'Bright morning!',
         'Hello, sunshine',
         'Feeling fresh?',
-        'Morning, sunshine',
         'Feels good, right?'
       ],
       // Afternoon (12-4 PM)
@@ -67,7 +65,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
       // Night (8 PM+)
       'night': [
         'Missed you',
-        "Look who's here",
         'Welcome back',
         'Time to relax',
         'Nighty night',
@@ -84,7 +81,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
       // Welcome back (random)
       'welcome': [
         'Missed you',
-        "Look who's here",
         'Welcome back',
         'Great to see you',
         'Hello there',

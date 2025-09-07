@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import '../models/people_transaction.dart';
 import '../services/people_hive_service.dart';
 import '../services/hive_service.dart';
@@ -31,6 +32,12 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   late AnimationController _animationController;
   late Animation<double> _slideAnimation;
 
+  // Animation controllers for blur transition
+  late AnimationController _blurTransitionController;
+  late Animation<double> _blurAnimation;
+  late Animation<double> _fadeAnimation;
+  late Animation<double> _scaleAnimation;
+
   // Focus nodes for better UX
   late FocusNode _personNameFocus;
   late FocusNode _amountFocus;
@@ -40,6 +47,10 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   List<String> _allPeopleNames = [];
   List<String> _filteredNames = [];
   bool _showSuggestions = false;
+
+  // State for info container
+  bool _showDetailedInfo = false;
+  bool _isTransitioning = false;
 
   // Transaction type definitions in the requested order
   final List<String> _transactionOrder = ['owe', 'give', 'take', 'claim'];
@@ -101,6 +112,36 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
       curve: Curves.easeOutCubic,
     ));
 
+    // Blur transition animation controller
+    _blurTransitionController = AnimationController(
+      duration: Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _blurAnimation = Tween<double>(
+      begin: 0.0,
+      end: 5.0,
+    ).animate(CurvedAnimation(
+      parent: _blurTransitionController,
+      curve: Curves.easeInOut,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(
+      parent: _blurTransitionController,
+      curve: Curves.easeInOut,
+    ));
+
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.05,
+    ).animate(CurvedAnimation(
+      parent: _blurTransitionController,
+      curve: Curves.easeInOut,
+    ));
+
     _animationController.forward();
 
     // Initialize focus nodes
@@ -121,6 +162,8 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
           TextEditingController(text: widget.transaction!.personName);
       _selectedDate = widget.transaction!.date;
       _transactionType = widget.transaction!.transactionType;
+      // Show detailed info if editing existing transaction
+      _showDetailedInfo = true;
     } else {
       _amountController = TextEditingController();
       _reasonController = TextEditingController();
@@ -131,6 +174,8 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
     // Add listener for autocomplete
     _personNameController.addListener(_onPersonNameChanged);
+    // Add listener for amount field to trigger info transition
+    _amountController.addListener(_onAmountChanged);
 
     // Auto focus amount field if setting is enabled
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -145,6 +190,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
+    _blurTransitionController.dispose();
     _amountController.dispose();
     _reasonController.dispose();
     _personNameController.dispose();
@@ -189,6 +235,36 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
     setState(() {
       _showSuggestions = _filteredNames.isNotEmpty;
+    });
+  }
+
+  void _onAmountChanged() {
+    final hasAmount = _amountController.text.trim().isNotEmpty;
+    
+    if (hasAmount && !_showDetailedInfo && !_isTransitioning) {
+      _triggerBlurTransition(true);
+    } else if (!hasAmount && _showDetailedInfo && !_isTransitioning) {
+      _triggerBlurTransition(false);
+    }
+  }
+
+  void _triggerBlurTransition(bool showDetailed) {
+    if (_isTransitioning) return;
+    
+    setState(() {
+      _isTransitioning = true;
+    });
+
+    _blurTransitionController.forward().then((_) {
+      setState(() {
+        _showDetailedInfo = showDetailed;
+      });
+      
+      _blurTransitionController.reverse().then((_) {
+        setState(() {
+          _isTransitioning = false;
+        });
+      });
     });
   }
 
@@ -274,7 +350,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
                     SizedBox(height: 24),
 
-                    // Combined Info Container (replacing both previous info containers)
+                    // Combined Info Container with blur transition
                     _buildCombinedInfoCard(),
 
                     SizedBox(height: 24),
@@ -284,7 +360,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                       children: [
                         // Amount Field - 60% width
                         Expanded(
-                          flex: 7,
+                          flex: 6,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -333,7 +409,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                         SizedBox(width: 16),
                         // Date Field - 40% width
                         Expanded(
-                          flex: 3,
+                          flex: 4,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -412,7 +488,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
                       },
                     ),
 
-                    SizedBox(height: 24),
+                    SizedBox(height: 5), // Reduced from 24 to 16 to match amount->reason spacing
 
                     // Person Name Field with Horizontal Autocomplete
                     Text(
@@ -625,14 +701,7 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
 
   Widget _buildCombinedInfoCard() {
     final typeData = _transactionTypes[_transactionType]!;
-    final amount =
-        _amountController.text.isNotEmpty ? _amountController.text : '0';
-    final person = _personNameController.text.isNotEmpty
-        ? _personNameController.text
-        : 'Person';
-    final reason =
-        _reasonController.text.isNotEmpty ? _reasonController.text : 'reason';
-
+    
     return Container(
       padding: EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -642,92 +711,114 @@ class _AddPeopleTransactionModalState extends State<AddPeopleTransactionModal>
           color: typeData['color'].withOpacity(0.3),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Main description
-          Row(
-            children: [
-              Icon(
-                typeData['icon'],
-                color: typeData['color'],
-                size: 16,
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  typeData['description'],
-                  style: TextStyle(
-                    color: typeData['color'],
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+      child: AnimatedBuilder(
+        animation: _blurTransitionController,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Opacity(
+              opacity: _fadeAnimation.value,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(
+                  sigmaX: _blurAnimation.value,
+                  sigmaY: _blurAnimation.value,
                 ),
+                child: _showDetailedInfo 
+                  ? _buildDetailedInfo(typeData)
+                  : _buildInitialInfo(typeData),
               ),
-            ],
-          ),
-
-          SizedBox(height: 8),
-
-          // Example
-          Text(
-            'Example: ${typeData['example']}',
-            style: TextStyle(
-              color: typeData['color'].withOpacity(0.8),
-              fontSize: 12,
             ),
-          ),
-
-          SizedBox(height: 12),
-          Divider(color: typeData['color'].withOpacity(0.3), height: 1),
-          SizedBox(height: 12),
-
-          // People Balance Impact
-          Row(
-            children: [
-              Icon(
-                Icons.people,
-                color: typeData['color'],
-                size: 14,
-              ),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  _getPeopleBalanceText(amount, person),
-                  style: TextStyle(
-                    color: typeData['color'],
-                    fontWeight: FontWeight.w500,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          SizedBox(height: 8),
-
-          // Main Balance Impact
-          Row(
-            children: [
-              Icon(
-                Icons.account_balance_wallet,
-                color: Colors.grey[600],
-                size: 14,
-              ),
-              SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  _getMainBalanceText(amount, person, reason),
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildInitialInfo(Map<String, dynamic> typeData) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Main description
+        Row(
+          children: [
+            Icon(
+              typeData['icon'],
+              color: typeData['color'],
+              size: 16,
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                typeData['description'],
+                style: TextStyle(
+                  color: typeData['color'],
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(height: 8),
+
+        // Example
+        Text(
+          'Example: ${typeData['example']}',
+          style: TextStyle(
+            color: typeData['color'].withOpacity(0.8),
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailedInfo(Map<String, dynamic> typeData) {
+    final amount = _amountController.text.isNotEmpty ? _amountController.text : '0';
+    final person = _personNameController.text.isNotEmpty
+        ? _personNameController.text
+        : 'Someone';
+    final reason = _reasonController.text.isNotEmpty 
+        ? _reasonController.text 
+        : 'reason';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // People Balance Impact
+        Row(
+          children: [
+            Icon(
+              Icons.people,
+              color: typeData['color'],
+              size: 16,
+            ),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                _getPeopleBalanceText(amount, person),
+                style: TextStyle(
+                  color: typeData['color'],
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        SizedBox(height: 8),
+
+        // Main Balance Impact
+        Text(
+          _getMainBalanceText(amount, person, reason),
+          style: TextStyle(
+            color: typeData['color'].withOpacity(0.8),
+            fontSize: 12,
+          ),
+        ),
+      ],
     );
   }
 
