@@ -45,7 +45,7 @@ This document outlines all tasks, features, and fixes in the development of your
 
 ## ⬜ Pending Tasks (TODO)
 
-- ⬜ edit feature coming soon problem 
+- ⬜ edit feature coming soon problem
 - ⬜ Implement chart for financial visualization in balance card
 - ⬜ Onboarding: Progressive cards showing app value propositions
 - ⬜ Add balance update animations with positive/negative feedback

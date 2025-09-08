@@ -8,6 +8,7 @@ import '../widgets/transaction_card.dart';
 import '../widgets/date_header.dart';
 import '../widgets/custom_snackbar.dart';
 import 'monthly_summary_screen.dart';
+import '../widgets/add_transaction_modal.dart';
 import 'package:flutter/rendering.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -115,7 +116,7 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             balance: _balance,
                             currency: settings.currency,
                           ),
-                          SizedBox(height: 5),
+                          SizedBox(height: 24),
                         ],
                       ),
                     ),
@@ -230,8 +231,10 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       timeBasedGreetings = greetings['night']!;
     }
 
-    return timeBasedGreetings[DateTime.now().second % timeBasedGreetings.length];
+    return timeBasedGreetings[
+        DateTime.now().second % timeBasedGreetings.length];
   }
+
   Widget _buildGroupedTransactionsList(String currency) {
     if (_allTransactions.isEmpty) {
       return SliverToBoxAdapter(
@@ -319,9 +322,20 @@ class HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _editTransaction(Transaction transaction, int index) {
-    // This will be handled by the parent navigation screen
-    // For now, we'll show a simple message
-    CustomSnackBar.show(context, 'Edit feature coming soon!', SnackBarType.info);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => AddTransactionModal(
+        transaction: transaction,
+        onSave: (updatedTransaction) async {
+          await HiveService.updateTransaction(index, updatedTransaction);
+          refreshData();
+          CustomSnackBar.show(context, 'Transaction updated successfully!',
+              SnackBarType.success);
+        },
+      ),
+    );
   }
 
   void _deleteTransaction(int index) {
